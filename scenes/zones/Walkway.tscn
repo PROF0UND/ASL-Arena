@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/zones/Walkway.gd" id="1_walk"]
+[ext_resource type="PackedScene" path="res://scenes/actors/NPC.tscn" id="2_npc"]
+
+[node name="Walkway" type="Node2D"]
+script = ExtResource("1_walk")
+
+[node name="NPC1" parent="." instance=ExtResource("2_npc")]
+position = Vector2(-24, 90)
+
+[node name="NPC2" parent="." instance=ExtResource("2_npc")]
+position = Vector2(104, 170)
+
+[node name="NPC3" parent="." instance=ExtResource("2_npc")]
+position = Vector2(-24, 250)

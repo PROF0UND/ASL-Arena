@@ -1,0 +1,10 @@
+# Godot 4 cache and exports
+.godot/
+export/
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
