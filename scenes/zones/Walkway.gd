@@ -16,8 +16,12 @@ func _ready() -> void:
 	add_to_group("zone")
 
 
+func bounds() -> Rect2:
+	return Rect2(global_position, size)
+
+
 func contains_point(p: Vector2) -> bool:
-	return Rect2(global_position, size).has_point(p)
+	return bounds().has_point(p)
 
 
 func _draw() -> void:

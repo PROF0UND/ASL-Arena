@@ -1,0 +1,283 @@
+extends Node2D
+## Owns the map and everyone in it. Spawns players, starts escorts, and on the host
+## runs arena authority: fireball spawns, hits, and sign drops.
+## To change the map, move or swap the zone instances under Zones in World.tscn.
+
+const PLAYER_SCENE := preload("res://scenes/actors/Player.tscn")
+const GUARD_SCENE := preload("res://scenes/actors/Guard.tscn")
+const FIREBALL_SCENE := preload("res://scenes/arena/Fireball.tscn")
+const DROP_SCENE := preload("res://scenes/arena/SignDrop.tscn")
+const GUARD_OFFSETS := [Vector2(-20, 0), Vector2(20, 0)]
+
+var players := {}    # slot -> Player
+var fireballs := {}  # id -> Fireball
+var drops := {}      # id -> SignDrop
+
+var _next_id := 0
+var _drop_timer := Config.DROP_INTERVAL
+var _was_at_door := false
+
+@onready var arena = $Zones/Arena
+@onready var hud = $HUD
+@onready var dojo_ui = $DojoUI
+@onready var combat = $Combat
+@onready var _players_root: Node2D = $Players
+@onready var _guards_root: Node2D = $Guards
+@onready var _fireballs_root: Node2D = $Fireballs
+@onready var _drops_root: Node2D = $Drops
+
+
+func _ready() -> void:
+	add_to_group("world")
+	Net.opponent_left.connect(_on_opponent_left)
+	GameState.escort_started.connect(_on_escort_started)
+	if GameState.mode == "quick":
+		_setup_quick_duel()
+	elif multiplayer.is_server():
+		_spawn_player(1, 1, get_home(1).spawn_point())
+	else:
+		_client_ready.rpc_id(1)
+
+
+func _process(delta: float) -> void:
+	var me = local_player()
+	if me:
+		_check_dojo_door(me)
+		_check_drop_pickup(me)
+	if multiplayer.is_server():
+		_host_process(delta)
+
+
+# --- Lookups ---
+
+func local_player():
+	return players.get(Net.local_slot())
+
+
+func opponent_of(slot: int):
+	return players.get(3 - slot)
+
+
+func get_home(slot: int):
+	for home in get_tree().get_nodes_in_group("home"):
+		if home.slot == slot:
+			return home
+	return null
+
+
+## Everything the map covers; the camera never shows past this.
+func map_bounds() -> Rect2:
+	var zones := get_tree().get_nodes_in_group("zone")
+	var rect: Rect2 = zones[0].bounds()
+	for zone in zones:
+		rect = rect.merge(zone.bounds())
+	return rect
+
+
+func is_walkable(p: Vector2) -> bool:
+	if GameState.phase >= GameState.Phase.FIGHT:
+		return arena.contains_point(p)  # nobody leaves once the fight starts
+	for zone in get_tree().get_nodes_in_group("zone"):
+		if zone.contains_point(p):
+			return true
+	return false
+
+
+# --- Spawning ---
+
+func _setup_quick_duel() -> void:
+	_spawn_player(1, 1, arena.fight_start(get_home(1).exit_global()))
+	var dummy = PLAYER_SCENE.instantiate()
+	dummy.setup(2, 1, true)
+	dummy.position = arena.fight_start(get_home(2).exit_global())
+	_players_root.add_child(dummy)
+	players[2] = dummy
+	for letter in Config.QUICK_DUEL_LETTERS:
+		GameState.learn_letter(1, letter)
+	GameState.start_fight()
+
+
+@rpc("any_peer", "reliable")
+func _client_ready() -> void:
+	if not multiplayer.is_server():
+		return
+	var id := multiplayer.get_remote_sender_id()
+	_spawn_player.rpc_id(id, 1, 1, players[1].global_position)
+	_spawn_player.rpc(id, 2, get_home(2).spawn_point())
+	GameState.send_full_state_to(id)
+
+
+@rpc("authority", "call_local", "reliable")
+func _spawn_player(peer: int, slot: int, pos: Vector2) -> void:
+	if players.has(slot):
+		return
+	var p = PLAYER_SCENE.instantiate()
+	p.setup(slot, peer)
+	p.position = pos
+	_players_root.add_child(p)
+	players[slot] = p
+	print("[World] Spawned P%d (peer %d)" % [slot, peer])
+
+
+# --- Dojo ---
+
+func _check_dojo_door(me) -> void:
+	if GameState.phase >= GameState.Phase.FIGHT:
+		return
+	var at_door: bool = get_home(me.slot).door_global().has_point(me.global_position)
+	if at_door and not _was_at_door and not dojo_ui.visible:
+		dojo_ui.open()
+	_was_at_door = at_door
+
+
+# --- Guards ---
+
+func _on_escort_started(slot: int) -> void:
+	var target = players.get(slot)
+	if target == null:
+		return
+	if target.is_local():
+		dojo_ui.close()
+	var entry: Vector2 = arena.entry_from(target.global_position)
+	for offset in GUARD_OFFSETS:
+		var guard = GUARD_SCENE.instantiate()
+		_guards_root.add_child(guard)
+		guard.global_position = entry + offset
+		guard.escort(target, offset)
+		if target.is_local() and offset == GUARD_OFFSETS[0]:
+			guard.reached_target.connect(func(): target.start_escort(_escort_path_for(target)))
+
+
+func _escort_path_for(player) -> Array[Vector2]:
+	var home = get_home(player.slot)
+	var exit: Vector2 = home.exit_global()
+	var path: Array[Vector2] = []
+	if home.contains_point(player.global_position):
+		path.append(exit)
+	path.append(arena.entry_from(exit))
+	path.append(arena.fight_start(exit))
+	return path
+
+
+# --- Fireballs (host decides, everyone simulates) ---
+
+func request_fireball(slot: int, quality: float) -> void:
+	if multiplayer.is_server():
+		_fire(slot, quality)
+	else:
+		_fire.rpc_id(1, slot, quality)
+
+
+@rpc("any_peer", "reliable")
+func _fire(slot: int, quality: float) -> void:
+	if not multiplayer.is_server() or GameState.phase != GameState.Phase.FIGHT:
+		return
+	var shooter = players.get(slot)
+	var target = opponent_of(slot)
+	if shooter == null or target == null:
+		return
+	var from: Vector2 = shooter.center()
+	var dir: Vector2 = (target.center() - from).normalized()
+	_next_id += 1
+	_spawn_fireball.rpc(_next_id, slot, from, dir, Config.tier_for(quality))
+
+
+@rpc("authority", "call_local", "reliable")
+func _spawn_fireball(id: int, slot: int, from: Vector2, dir: Vector2, tier: String) -> void:
+	var fb = FIREBALL_SCENE.instantiate()
+	fb.setup(id, slot, dir, tier)
+	fb.position = from
+	_fireballs_root.add_child(fb)
+	fireballs[id] = fb
+	fb.tree_exiting.connect(func(): fireballs.erase(id))
+
+
+@rpc("authority", "call_local", "reliable")
+func _fireball_hit(id: int, target_slot: int) -> void:
+	var fb = fireballs.get(id)
+	if fb:
+		fireballs.erase(id)
+		fb.queue_free()
+	var target = players.get(target_slot)
+	if target:
+		target.flash()
+
+
+func _host_process(delta: float) -> void:
+	if GameState.phase != GameState.Phase.FIGHT:
+		return
+	for id in fireballs.keys():
+		var fb = fireballs[id]
+		var target = opponent_of(fb.owner_slot)
+		if target and fb.global_position.distance_to(target.center()) < fb.radius + 10.0:
+			_fireball_hit.rpc(id, target.slot)
+			GameState.damage(target.slot, fb.damage)
+	_drop_timer -= delta
+	if _drop_timer <= 0.0:
+		_drop_timer = Config.DROP_INTERVAL
+		_try_spawn_drop()
+
+
+# --- Sign drops (teach a letter mid-fight) ---
+
+func _try_spawn_drop() -> void:
+	if not drops.is_empty():
+		return
+	var candidates := []
+	for letter in Config.STARTER_LETTERS:
+		if not (letter in GameState.learned[1] and letter in GameState.learned[2]):
+			candidates.append(letter)
+	if candidates.is_empty():
+		return
+	_next_id += 1
+	_spawn_drop.rpc(_next_id, arena.random_drop_point(), candidates.pick_random())
+
+
+@rpc("authority", "call_local", "reliable")
+func _spawn_drop(id: int, pos: Vector2, letter: String) -> void:
+	var drop = DROP_SCENE.instantiate()
+	drop.setup(id, letter)
+	drop.position = pos
+	_drops_root.add_child(drop)
+	drops[id] = drop
+
+
+func _check_drop_pickup(me) -> void:
+	if GameState.phase != GameState.Phase.FIGHT:
+		return
+	for id in drops:
+		var drop = drops[id]
+		if drop.pending or drop.letter in GameState.learned[me.slot]:
+			continue
+		if drop.global_position.distance_to(me.global_position) < Config.DROP_PICKUP_RADIUS:
+			drop.pending = true
+			if multiplayer.is_server():
+				_pickup(id, me.slot)
+			else:
+				_pickup.rpc_id(1, id, me.slot)
+
+
+@rpc("any_peer", "reliable")
+func _pickup(id: int, slot: int) -> void:
+	if not multiplayer.is_server() or not drops.has(id):
+		return
+	var letter: String = drops[id].letter
+	if letter in GameState.learned[slot]:
+		return
+	GameState.learn_letter(slot, letter)
+	_drop_taken.rpc(id, slot, letter)
+
+
+@rpc("authority", "call_local", "reliable")
+func _drop_taken(id: int, slot: int, letter: String) -> void:
+	if drops.has(id):
+		drops[id].queue_free()
+		drops.erase(id)
+	var picker = players.get(slot)
+	if picker and picker.is_local():
+		hud.show_learned(letter)
+
+
+func _on_opponent_left() -> void:
+	if GameState.mode == "online":
+		hud.show_game_over("Opponent disconnected")

@@ -1,7 +1,7 @@
 extends Node2D
 ## A walkway NPC who shows a line of ASL advice when the local player walks close.
 
-const TALK_RADIUS := 48.0
+const TALK_RADIUS := 32.0
 
 ## Leave empty to pick a line from Config.NPC_ADVICE based on where the NPC stands.
 @export_multiline var advice := ""

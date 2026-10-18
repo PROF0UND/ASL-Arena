@@ -7,10 +7,10 @@
 script = ExtResource("1_walk")
 
 [node name="NPC1" parent="." instance=ExtResource("2_npc")]
-position = Vector2(-24, 90)
+position = Vector2(-18, 40)
 
 [node name="NPC2" parent="." instance=ExtResource("2_npc")]
-position = Vector2(104, 170)
+position = Vector2(58, 75)
 
 [node name="NPC3" parent="." instance=ExtResource("2_npc")]
-position = Vector2(-24, 250)
+position = Vector2(-18, 110)

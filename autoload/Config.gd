@@ -26,30 +26,30 @@ const KEYBOARD_SLOPPY_CONFIDENCE := 0.5 # holding Shift + letter key
 
 # --- Networking & movement ---
 const NET_PORT := 7777
-const PLAYER_SPEED := 120.0
+const PLAYER_SPEED := 80.0
 const POSITION_SEND_RATE := 20.0
 
 # --- Arena rules ---
 const MAX_HP := 100
 const GUARD_WAIT_TIME := 10.0  # after the first player reaches the arena
-const GUARD_SPEED := 110.0
-const ESCORT_SPEED := 80.0
-const PROMPT_RANGE := 180.0    # how close to the opponent before letters appear
+const GUARD_SPEED := 80.0
+const ESCORT_SPEED := 60.0
+const PROMPT_RANGE := 120.0    # how close to the opponent before letters appear
 const PROMPT_GAP := 0.8        # pause between one prompt ending and the next
 const HINT_DELAY := 5.0        # show the hand-sign card after this long
 const PROMPT_TIMEOUT := 10.0   # give up on the letter after this long
 const LETTER_COOLDOWN := 6.0   # per letter, so knowing few signs means few attacks
 const DROP_INTERVAL := 12.0
-const DROP_PICKUP_RADIUS := 16.0
+const DROP_PICKUP_RADIUS := 12.0
 
 # --- Fireballs ---
 const QUALITY_WEAK_BELOW := 0.6
 const QUALITY_STRONG_ABOVE := 0.85
 const FIREBALL_LIFETIME := 2.5
 const FIREBALL_TIERS := {
-	"weak": {"damage": 4, "speed": 160.0, "radius": 4.0, "color": Color(1.0, 0.8, 0.45)},
-	"medium": {"damage": 10, "speed": 220.0, "radius": 6.0, "color": Color(1.0, 0.55, 0.15)},
-	"strong": {"damage": 20, "speed": 300.0, "radius": 9.0, "color": Color(1.0, 0.25, 0.05)},
+	"weak": {"damage": 4, "speed": 110.0, "radius": 3.0, "color": Color(1.0, 0.8, 0.45)},
+	"medium": {"damage": 10, "speed": 150.0, "radius": 4.0, "color": Color(1.0, 0.55, 0.15)},
+	"strong": {"damage": 20, "speed": 200.0, "radius": 6.0, "color": Color(1.0, 0.25, 0.05)},
 }
 
 # --- NPCs ---

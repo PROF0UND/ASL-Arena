@@ -1,6 +1,14 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/zones/Home.gd" id="1_home"]
+[ext_resource type="Texture2D" path="res://assets/start/start_bg.png" id="2_bg"]
 
 [node name="Home" type="Node2D"]
 script = ExtResource("1_home")
+background = ExtResource("2_bg")
+
+[node name="Background" type="Sprite2D" parent="."]
+show_behind_parent = true
+texture = ExtResource("2_bg")
+centered = false
+hframes = 2

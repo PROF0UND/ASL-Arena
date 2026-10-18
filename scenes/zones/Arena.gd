@@ -20,6 +20,10 @@ func contains_point(p: Vector2) -> bool:
 	return p.distance_to(global_position) <= radius
 
 
+func bounds() -> Rect2:
+	return Rect2(global_position - Vector2(radius, radius), Vector2(radius, radius) * 2.0)
+
+
 func is_inside(p: Vector2) -> bool:
 	return p.distance_to(global_position) <= radius - ENTRY_MARGIN
 
