@@ -33,7 +33,6 @@ const POSITION_SEND_RATE := 20.0
 const MAX_HP := 100
 const GUARD_WAIT_TIME := 10.0  # after the first player reaches the arena
 const GUARD_SPEED := 80.0
-const ESCORT_SPEED := 60.0
 const PROMPT_RANGE := 120.0    # how close to the opponent before letters appear
 const PROMPT_GAP := 0.8        # pause between one prompt ending and the next
 const HINT_DELAY := 5.0        # show the hand-sign card after this long

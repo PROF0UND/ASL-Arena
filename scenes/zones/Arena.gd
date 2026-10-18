@@ -20,32 +20,24 @@ func contains_point(p: Vector2) -> bool:
 	return p.distance_to(global_position) <= radius
 
 
+## The arena's screen. At least one screen wide so the camera never shows past it sideways.
 func bounds() -> Rect2:
-	return Rect2(global_position - Vector2(radius, radius), Vector2(radius, radius) * 2.0)
+	var half := Vector2(maxf(radius + 10.0, 160.0), radius + 10.0)
+	return Rect2(global_position - half, half * 2.0)
 
 
 func is_inside(p: Vector2) -> bool:
 	return p.distance_to(global_position) <= radius - ENTRY_MARGIN
 
 
-## Just inside the edge, on the side facing `from`.
-func entry_from(from: Vector2) -> Vector2:
-	return global_position + _dir_to(from) * (radius - ENTRY_MARGIN - 8.0)
-
-
-## Where a player coming from `from` stands when the fight starts.
-func fight_start(from: Vector2) -> Vector2:
-	return global_position + _dir_to(from) * radius * 0.35
+## Where each player stands when the fight starts: P1 on the north side, P2 on the south.
+func start_point(slot: int) -> Vector2:
+	return global_position + Vector2(0, -1 if slot == 1 else 1) * radius * 0.35
 
 
 func random_drop_point() -> Vector2:
 	var r := sqrt(randf()) * radius * 0.6
 	return global_position + Vector2.from_angle(randf() * TAU) * r
-
-
-func _dir_to(from: Vector2) -> Vector2:
-	var d := from - global_position
-	return d.normalized() if d.length() > 0.01 else Vector2.UP
 
 
 func _draw() -> void:

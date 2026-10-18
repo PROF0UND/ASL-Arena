@@ -1,13 +1,15 @@
 extends Node2D
 ## Owns the map and everyone in it. Spawns players, starts escorts, and on the host
 ## runs arena authority: fireball spawns, hits, and sign drops.
-## To change the map, move or swap the zone instances under Zones in World.tscn.
+## The map is separate screens (zones under Zones in World.tscn) spaced apart in one scene;
+## Portals move the local player between them with a fade.
 
 const PLAYER_SCENE := preload("res://scenes/actors/Player.tscn")
 const GUARD_SCENE := preload("res://scenes/actors/Guard.tscn")
 const FIREBALL_SCENE := preload("res://scenes/arena/Fireball.tscn")
 const DROP_SCENE := preload("res://scenes/arena/SignDrop.tscn")
 const GUARD_OFFSETS := [Vector2(-20, 0), Vector2(20, 0)]
+const FADE_TIME := 0.2
 
 var players := {}    # slot -> Player
 var fireballs := {}  # id -> Fireball
@@ -16,6 +18,9 @@ var drops := {}      # id -> SignDrop
 var _next_id := 0
 var _drop_timer := Config.DROP_INTERVAL
 var _was_at_door := false
+var _was_in_portal := false
+var _traveling := false
+var _fade: ColorRect
 
 @onready var arena = $Zones/Arena
 @onready var hud = $HUD
@@ -29,6 +34,7 @@ var _was_at_door := false
 
 func _ready() -> void:
 	add_to_group("world")
+	_build_fade()
 	Net.opponent_left.connect(_on_opponent_left)
 	GameState.escort_started.connect(_on_escort_started)
 	if GameState.mode == "quick":
@@ -42,6 +48,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	var me = local_player()
 	if me:
+		_check_portals(me)
 		_check_dojo_door(me)
 		_check_drop_pickup(me)
 	if multiplayer.is_server():
@@ -60,18 +67,17 @@ func opponent_of(slot: int):
 
 func get_home(slot: int):
 	for home in get_tree().get_nodes_in_group("home"):
-		if home.slot == slot:
+		if home.home_slot == slot:
 			return home
 	return null
 
 
-## Everything the map covers; the camera never shows past this.
-func map_bounds() -> Rect2:
-	var zones := get_tree().get_nodes_in_group("zone")
-	var rect: Rect2 = zones[0].bounds()
-	for zone in zones:
-		rect = rect.merge(zone.bounds())
-	return rect
+## The screen containing `p` (the camera stays inside it), or null.
+func zone_at(p: Vector2):
+	for zone in get_tree().get_nodes_in_group("zone"):
+		if zone.bounds().has_point(p):
+			return zone
+	return null
 
 
 func is_walkable(p: Vector2) -> bool:
@@ -86,10 +92,10 @@ func is_walkable(p: Vector2) -> bool:
 # --- Spawning ---
 
 func _setup_quick_duel() -> void:
-	_spawn_player(1, 1, arena.fight_start(get_home(1).exit_global()))
+	_spawn_player(1, 1, arena.start_point(1))
 	var dummy = PLAYER_SCENE.instantiate()
 	dummy.setup(2, 1, true)
-	dummy.position = arena.fight_start(get_home(2).exit_global())
+	dummy.position = arena.start_point(2)
 	_players_root.add_child(dummy)
 	players[2] = dummy
 	for letter in Config.QUICK_DUEL_LETTERS:
@@ -119,6 +125,45 @@ func _spawn_player(peer: int, slot: int, pos: Vector2) -> void:
 	print("[World] Spawned P%d (peer %d)" % [slot, peer])
 
 
+# --- Moving between screens ---
+
+func _check_portals(me) -> void:
+	if _traveling or GameState.phase >= GameState.Phase.FIGHT:
+		return
+	var portal = null
+	for p in get_tree().get_nodes_in_group("portal"):
+		if p.rect().has_point(me.global_position):
+			portal = p
+			break
+	if portal and not _was_in_portal:
+		travel(me, portal.target_position())
+	_was_in_portal = portal != null
+
+
+## Fade to black, move the local player, fade back in.
+func travel(me, destination: Vector2) -> void:
+	_traveling = true
+	me.input_locked = true
+	var tween := create_tween()
+	tween.tween_property(_fade, "color:a", 1.0, FADE_TIME)
+	tween.tween_callback(func(): me.teleport(destination))
+	tween.tween_property(_fade, "color:a", 0.0, FADE_TIME)
+	tween.tween_callback(func():
+		me.input_locked = false
+		_traveling = false)
+
+
+func _build_fade() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 20
+	add_child(layer)
+	_fade = ColorRect.new()
+	_fade.color = Color(0, 0, 0, 0)
+	_fade.size = Vector2(640, 360)
+	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(_fade)
+
+
 # --- Dojo ---
 
 func _check_dojo_door(me) -> void:
@@ -138,25 +183,20 @@ func _on_escort_started(slot: int) -> void:
 		return
 	if target.is_local():
 		dojo_ui.close()
-	var entry: Vector2 = arena.entry_from(target.global_position)
+	# Guards walk in from the edge of the late player's screen that faces the arena.
+	var spawn_at: Vector2 = target.global_position
+	var zone = zone_at(target.global_position)
+	if zone:
+		var b: Rect2 = zone.bounds()
+		var arena_is_below: bool = b.get_center().y < arena.global_position.y
+		spawn_at.y = b.end.y - 4.0 if arena_is_below else b.position.y + 4.0
 	for offset in GUARD_OFFSETS:
 		var guard = GUARD_SCENE.instantiate()
 		_guards_root.add_child(guard)
-		guard.global_position = entry + offset
+		guard.global_position = spawn_at + offset
 		guard.escort(target, offset)
 		if target.is_local() and offset == GUARD_OFFSETS[0]:
-			guard.reached_target.connect(func(): target.start_escort(_escort_path_for(target)))
-
-
-func _escort_path_for(player) -> Array[Vector2]:
-	var home = get_home(player.slot)
-	var exit: Vector2 = home.exit_global()
-	var path: Array[Vector2] = []
-	if home.contains_point(player.global_position):
-		path.append(exit)
-	path.append(arena.entry_from(exit))
-	path.append(arena.fight_start(exit))
-	return path
+			guard.reached_target.connect(func(): travel(target, arena.start_point(slot)))
 
 
 # --- Fireballs (host decides, everyone simulates) ---

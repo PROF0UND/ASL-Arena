@@ -2,38 +2,121 @@
 
 [ext_resource type="Script" path="res://scenes/world/World.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/zones/Arena.tscn" id="2_arena"]
-[ext_resource type="PackedScene" path="res://scenes/zones/Home.tscn" id="3_home"]
-[ext_resource type="PackedScene" path="res://scenes/zones/Walkway.tscn" id="4_walk"]
+[ext_resource type="PackedScene" path="res://scenes/zones/MapZone.tscn" id="3_zone"]
+[ext_resource type="Script" path="res://scenes/zones/Portal.gd" id="4_portal"]
 [ext_resource type="Script" path="res://scenes/arena/CombatController.gd" id="5_combat"]
 [ext_resource type="PackedScene" path="res://scenes/arena/ArenaHUD.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/dojo/DojoUI.tscn" id="7_dojo"]
-[ext_resource type="Texture2D" path="res://assets/start/start_bg_red.png" id="8_bg_red"]
+[ext_resource type="Texture2D" path="res://assets/start/start_bg.png" id="8_bg_blue"]
+[ext_resource type="Texture2D" path="res://assets/start/start_bg_red.png" id="9_bg_red"]
+[ext_resource type="Texture2D" path="res://assets/bridge/bridge.png" id="10_bridge"]
+[ext_resource type="PackedScene" path="res://scenes/actors/NPC.tscn" id="11_npc"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1_world")
 
 [node name="Zones" type="Node2D" parent="."]
 
+[node name="Home1" parent="Zones" instance=ExtResource("3_zone")]
+home_slot = 1
+background = ExtResource("8_bg_blue")
+walk_rect = Rect2(35, 20, 250, 200)
+blockers = Array[Rect2]([Rect2(188, 57, 96, 84), Rect2(150, 28, 76, 70), Rect2(167, 112, 22, 22), Rect2(35, 20, 46, 28), Rect2(40, 157, 60, 40), Rect2(100, 172, 44, 22), Rect2(184, 196, 16, 24), Rect2(246, 196, 18, 24)])
+door_rect = Rect2(224, 140, 20, 8)
+spawn_offset = Vector2(80, 90)
+
+[node name="ToBridge" type="Node2D" parent="Zones/Home1"]
+position = Vector2(200, 212)
+script = ExtResource("4_portal")
+size = Vector2(46, 8)
+target = NodePath("../../Bridge1/FromHome")
+
+[node name="FromBridge" type="Marker2D" parent="Zones/Home1"]
+position = Vector2(223, 196)
+
+[node name="Bridge1" parent="Zones" instance=ExtResource("3_zone")]
+position = Vector2(0, 400)
+background = ExtResource("10_bridge")
+frames = 4
+frame_time = 0.25
+walk_rect = Rect2(124, 0, 74, 240)
+
+[node name="FromHome" type="Marker2D" parent="Zones/Bridge1"]
+position = Vector2(160, 36)
+
+[node name="ToHome" type="Node2D" parent="Zones/Bridge1"]
+position = Vector2(124, 0)
+script = ExtResource("4_portal")
+size = Vector2(74, 4)
+target = NodePath("../../Home1/FromBridge")
+
+[node name="ToArena" type="Node2D" parent="Zones/Bridge1"]
+position = Vector2(124, 236)
+script = ExtResource("4_portal")
+size = Vector2(74, 4)
+target = NodePath("../../Arena/FromNorth")
+
+[node name="NPC1" parent="Zones/Bridge1" instance=ExtResource("11_npc")]
+position = Vector2(132, 80)
+
+[node name="NPC2" parent="Zones/Bridge1" instance=ExtResource("11_npc")]
+position = Vector2(190, 160)
+
 [node name="Arena" parent="Zones" instance=ExtResource("2_arena")]
-position = Vector2(160, 480)
+position = Vector2(160, 900)
 radius = 150.0
 
-[node name="Home1" parent="Zones" instance=ExtResource("3_home")]
+[node name="FromNorth" type="Marker2D" parent="Zones/Arena"]
+position = Vector2(0, -120)
 
-[node name="Home2" parent="Zones" instance=ExtResource("3_home")]
-position = Vector2(0, 735)
-slot = 2
-exit_point = Vector2(134, 26)
-background = ExtResource("8_bg_red")
+[node name="FromSouth" type="Marker2D" parent="Zones/Arena"]
+position = Vector2(0, 120)
+
+[node name="Bridge2" parent="Zones" instance=ExtResource("3_zone")]
+position = Vector2(0, 1200)
+background = ExtResource("10_bridge")
+frames = 4
+frame_time = 0.25
+walk_rect = Rect2(124, 0, 74, 240)
+
+[node name="FromHome" type="Marker2D" parent="Zones/Bridge2"]
+position = Vector2(160, 224)
+
+[node name="ToArena" type="Node2D" parent="Zones/Bridge2"]
+position = Vector2(124, 0)
+script = ExtResource("4_portal")
+size = Vector2(74, 4)
+target = NodePath("../../Arena/FromSouth")
+
+[node name="ToHome" type="Node2D" parent="Zones/Bridge2"]
+position = Vector2(124, 236)
+script = ExtResource("4_portal")
+size = Vector2(74, 4)
+target = NodePath("../../Home2/FromBridge")
+
+[node name="NPC1" parent="Zones/Bridge2" instance=ExtResource("11_npc")]
+position = Vector2(190, 80)
+
+[node name="NPC2" parent="Zones/Bridge2" instance=ExtResource("11_npc")]
+position = Vector2(132, 160)
+
+[node name="Home2" parent="Zones" instance=ExtResource("3_zone")]
+position = Vector2(0, 1600)
+home_slot = 2
+background = ExtResource("9_bg_red")
+walk_rect = Rect2(35, 20, 250, 200)
 blockers = Array[Rect2]([Rect2(188, 57, 96, 84), Rect2(150, 28, 76, 70), Rect2(167, 112, 22, 22), Rect2(35, 20, 46, 28), Rect2(40, 157, 60, 40), Rect2(100, 172, 44, 22), Rect2(93, 20, 19, 24), Rect2(152, 20, 18, 12)])
+door_rect = Rect2(224, 140, 20, 8)
+spawn_offset = Vector2(80, 90)
 
-[node name="WalkwayNorth" parent="Zones" instance=ExtResource("4_walk")]
-position = Vector2(203, 218)
-size = Vector2(40, 142)
+[node name="ToBridge" type="Node2D" parent="Zones/Home2"]
+position = Vector2(113, 20)
+script = ExtResource("4_portal")
+size = Vector2(38, 6)
+target = NodePath("../../Bridge2/FromHome")
 
-[node name="WalkwaySouth" parent="Zones" instance=ExtResource("4_walk")]
-position = Vector2(121, 620)
-size = Vector2(28, 137)
+[node name="FromBridge" type="Marker2D" parent="Zones/Home2"]
+position = Vector2(132, 36)
 
 [node name="Drops" type="Node2D" parent="."]
 

@@ -36,8 +36,9 @@ On Windows, click "Allow" on the firewall prompt the first time.
 
 1. Each player starts in their own home. Walk onto the yellow door to enter the **dojo**. The sensei
    teaches the starter letters `A B C I L O V W Y` one at a time: hold the sign to learn it.
-2. Follow the stone walkway to the **arena**. NPCs along the way give tips.
-3. When one player reaches the arena, the other has **10 seconds**. After that, guards walk over and escort them in.
+2. Walk out through your home's gate onto the **bridge** (NPCs there give tips), then off the far end into the **arena**.
+   Each area is its own screen; walking through a gate or off the bridge fades to the next one. The arena is one-way.
+3. When one player reaches the arena, the other has **10 seconds**. After that, guards walk onto their screen and escort them in.
 4. In the fight, when you're close to your opponent, a random letter **you've learned** appears over your head.
    Sign it to throw a fireball. Its power depends on sign quality: weak below 0.6 confidence,
    strong above 0.85, medium in between.
@@ -77,13 +78,15 @@ python3 tools/fake_sender.py --interactive  # type "A", "B 0.7", "?" or Enter fo
 autoload/      Config (tunables), Net (ENet host/join), GameState (match state, host-authoritative),
                SignInput (keyboard + UDP tracker, hold-to-confirm)
 scenes/menu/   Main menu
-scenes/world/  World.tscn — places the zones; move/swap them here to change the map
-scenes/zones/  Home (with dojo), Walkway (with NPCs), Arena
-scenes/actors/ Player, NPC, Guard  (red-box placeholders)
+scenes/world/  World.tscn — the map: Home1 → Bridge1 → Arena ← Bridge2 ← Home2, linked by Portal nodes
+scenes/zones/  MapZone (one painted screen: background, walkable rect, blockers, optional dojo door),
+               Portal (doorway to another screen), Arena
+scenes/actors/ Player (wizard sprite; P2 is recolored red by a shader), NPC, Guard
 scenes/dojo/   Dojo lesson overlay
 scenes/arena/  HUD, combat prompt loop, fireballs, sign drops, hand-skeleton view
 tools/         fake_sender.py
 ```
 
-Art is placeholder: red boxes for characters, a green background, and outlined zones.
-Swap in sprites by replacing the `Body` ColorRect in each actor scene.
+Art lives in `assets/`. Screens are 320×240 per frame, exported as horizontal animation strips.
+Open a screen in World.tscn to see its walkable area (green), blockers (red), dojo door (yellow) and portals (blue)
+drawn over the art. NPCs and guards are still red-box placeholders.

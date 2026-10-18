@@ -18,7 +18,6 @@ var hold_progress := 0.0:
 			hold_progress = value
 			queue_redraw()
 
-var _escort_path: Array[Vector2] = []
 var _remote_target := Vector2.ZERO
 var _send_timer := 0.0
 var _reported_in_arena := false
@@ -53,11 +52,7 @@ func _ready() -> void:
 		add_to_group("local_player")
 		_camera.enabled = true
 		_camera.make_current()
-		var limits: Rect2 = _world().map_bounds()
-		_camera.limit_left = int(limits.position.x)
-		_camera.limit_top = int(limits.position.y)
-		_camera.limit_right = int(limits.end.x)
-		_camera.limit_bottom = int(limits.end.y)
+		_update_camera_limits()
 
 
 func is_local() -> bool:
@@ -75,9 +70,7 @@ func _physics_process(delta: float) -> void:
 		_update_animation(delta)
 		return
 
-	if not _escort_path.is_empty():
-		_follow_escort(delta)
-	elif not input_locked and GameState.phase != GameState.Phase.OVER:
+	if not input_locked and GameState.phase != GameState.Phase.OVER:
 		var dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 		_move(dir * Config.PLAYER_SPEED * delta)
 
@@ -121,20 +114,39 @@ func _frame_fight() -> void:
 		_camera.position = Vector2.ZERO
 
 
-# --- Escort (guards walking a late player to the arena) ---
+# --- Changing screens ---
 
-func start_escort(path: Array[Vector2]) -> void:
-	_escort_path = path.duplicate()
-	input_locked = true
+## Jump straight to `pos` (used by portals and the guard escort). The other peer snaps too
+## instead of sliding across the gap between screens.
+func teleport(pos: Vector2) -> void:
+	_snap_to(pos)
+	_update_camera_limits()
+	if _world().players.size() == 2:
+		_teleported.rpc(pos)
 
 
-func _follow_escort(delta: float) -> void:
-	var target := _escort_path[0]
-	global_position = global_position.move_toward(target, Config.ESCORT_SPEED * delta)
-	if global_position.distance_to(target) < 1.0:
-		_escort_path.remove_at(0)
-		if _escort_path.is_empty():
-			input_locked = false
+@rpc("authority", "call_remote", "reliable")
+func _teleported(pos: Vector2) -> void:
+	_snap_to(pos)
+
+
+func _snap_to(pos: Vector2) -> void:
+	global_position = pos
+	_remote_target = pos
+	_last_position = pos
+
+
+## Keep the camera inside whichever screen the player is on.
+func _update_camera_limits() -> void:
+	var zone = _world().zone_at(global_position)
+	if zone == null:
+		return
+	var b: Rect2 = zone.bounds()
+	_camera.limit_left = int(b.position.x)
+	_camera.limit_top = int(b.position.y)
+	_camera.limit_right = int(b.end.x)
+	_camera.limit_bottom = int(b.end.y)
+	_camera.reset_smoothing()
 
 
 # --- Visuals ---

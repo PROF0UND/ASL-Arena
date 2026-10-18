@@ -121,7 +121,7 @@ func _status_text() -> String:
 	if phase == GameState.Phase.HOME:
 		if multiplayer.is_server() and GameState.mode == "online" and _world.players.size() < 2:
 			return "Waiting for Player 2 to join. Host IP: %s" % _local_ip()
-		return "Learn signs in the dojo, then follow the stone path to the arena."
+		return "Learn signs in the dojo, then cross the bridge to the arena."
 	if phase == GameState.Phase.WAITING:
 		var secs := ceili(GameState.countdown)
 		if GameState.countdown <= 0.0:
