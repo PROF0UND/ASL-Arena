@@ -38,6 +38,8 @@ var celebrate := 0.0           # 0..1 while a "learned it!" burst plays
 var board_alpha := 1.0         # fades the next sign in
 var title_alpha := 0.0         # "The Dojo" title card
 var keyboard_hint := false     # show the Space + key reminder when no tracker is connected
+var practice := false          # the board is replaying an already-learned sign
+var hover_slot := -1           # toolbar slot under the mouse, or -1
 
 var _font: Font
 
@@ -140,6 +142,12 @@ func _draw_board() -> void:
 		_text_centered("Off to the arena", Rect2(inner.position.x, inner.position.y + 50, inner.size.x, 10), 6, WOOD)
 		return
 
+	if practice:
+		var tag := Rect2(inner.position + Vector2(3, 3), Vector2(40, 11))
+		draw_rect(tag, SLOT_EDGE)
+		draw_rect(tag.grow(-1), SLOT_FILL)
+		_text_centered("Practice", tag, 6, INK)
+
 	var modulate_color := Color(1, 1, 1, board_alpha)
 	if sign_texture:
 		var tex_size := sign_texture.get_size()
@@ -169,22 +177,41 @@ func _draw_board() -> void:
 
 # --- Toolbar (one slot per sign) ---
 
-func _draw_toolbar() -> void:
+## Toolbar slot index under a point in this control's coordinates, or -1.
+func slot_at(point: Vector2) -> int:
+	for i in letters.size():
+		if _slot_rect(i).has_point(point):
+			return i
+	return -1
+
+
+func _toolbar_frame() -> Rect2:
 	var inner_w := letters.size() * SLOT + (letters.size() - 1) * SLOT_GAP
-	var frame := Rect2((SIZE.x - inner_w) / 2.0 - 4, 153, inner_w + 8, SLOT + 8)
+	return Rect2((SIZE.x - inner_w) / 2.0 - 4, 153, inner_w + 8, SLOT + 8)
+
+
+func _slot_rect(i: int) -> Rect2:
+	var frame := _toolbar_frame()
+	return Rect2(frame.position.x + 4 + i * (SLOT + SLOT_GAP), frame.position.y + 4, SLOT, SLOT)
+
+
+func _draw_toolbar() -> void:
+	var frame := _toolbar_frame()
 	draw_rect(Rect2(frame.position + Vector2(2, 2), frame.size), SHADOW)
 	draw_rect(frame, WOOD_DARK)
 	draw_rect(frame.grow(-1), BAR_FILL)
 	draw_line(frame.position + Vector2(1, 1), Vector2(frame.end.x - 1, frame.position.y + 1), WOOD_HI, 1.0)
 	for i in letters.size():
 		var letter: String = letters[i]
-		var r := Rect2(frame.position.x + 4 + i * (SLOT + SLOT_GAP), frame.position.y + 4, SLOT, SLOT)
+		var r := _slot_rect(i)
 		var known := letter in learned
 		draw_rect(r, SLOT_EDGE)
 		draw_rect(r.grow(-1), SLOT_FILL if known else Color(SLOT_FILL.darkened(0.35)))
 		if letter == lesson:
 			var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() / 200.0)
 			draw_rect(r.grow(1), Color(GOLD, pulse), false, 1.0)
+		elif known and i == hover_slot:
+			draw_rect(r.grow(1), Color.WHITE, false, 1.0)  # finished signs can be clicked to practice
 		_text_centered(letter if known else "?", r, 8, INK if known else Color(INK, 0.45))
 
 	# Controls on a small wooden notice to the right of the toolbar.

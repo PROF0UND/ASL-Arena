@@ -1,6 +1,7 @@
 extends CanvasLayer
 ## The dojo interior. Only the local player sees it; their body stays parked at the door outside.
 ## The board shows one hand sign at a time: hold it to learn it, then the next one appears.
+## Click a finished sign in the toolbar to practice it again (clicking it a second time goes back).
 ## World.gd fades in and out of this screen (enter_dojo / leave_dojo).
 
 const Robe := preload("res://scenes/actors/robe.gd")
@@ -8,6 +9,7 @@ const CELEBRATE_TIME := 0.9
 const TITLE_TIME := 1.6
 
 var _celebrating := false
+var _practicing := false
 
 @onready var _world = get_parent()
 @onready var _room = $Room
@@ -25,6 +27,8 @@ func open() -> void:
 	visible = true
 	_set_player_locked(true)
 	_celebrating = false
+	_practicing = false
+	_room.practice = false
 	_wizard.material = Robe.for_slot(Net.local_slot())
 	_wizard.play(&"idle")
 	_show_lesson(current_lesson())
@@ -39,6 +43,7 @@ func close() -> void:
 		return
 	visible = false
 	SignInput.set_target("")
+	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 	_set_player_locked(false)
 
 
@@ -55,18 +60,51 @@ func _process(_delta: float) -> void:
 	_room.letters = Config.STARTER_LETTERS
 	_room.learned = GameState.learned[Net.local_slot()]
 	_room.keyboard_hint = not SignInput.tracker_connected
+	var hovered := _clickable_slot(_room.slot_at(_room.get_local_mouse_position()))
+	_room.hover_slot = hovered
+	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if hovered >= 0 else Input.CURSOR_ARROW)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
+	if not visible:
+		return
+	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_world.leave_dojo()
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var slot := _clickable_slot(_room.slot_at(_room.make_canvas_position_local(event.position)))
+		if slot >= 0:
+			get_viewport().set_input_as_handled()
+			_toggle_practice(Config.STARTER_LETTERS[slot])
+
+
+## A slot can be clicked only if its sign has been learned and nothing is mid-celebration.
+func _clickable_slot(slot: int) -> int:
+	if slot < 0 or _celebrating:
+		return -1
+	return slot if Config.STARTER_LETTERS[slot] in GameState.learned[Net.local_slot()] else -1
+
+
+func _toggle_practice(letter: String) -> void:
+	if _practicing and letter == _room.lesson:
+		_end_practice()  # clicked the sign being practiced: back to the lesson
+		return
+	_practicing = true
+	_room.practice = true
+	_show_lesson(letter)
+
+
+func _end_practice() -> void:
+	_practicing = false
+	_room.practice = false
+	_show_lesson(current_lesson())
 
 
 func _on_letter_confirmed(letter: String, _quality: float) -> void:
 	if not visible or _celebrating or letter != _room.lesson or letter == "":
 		return
-	GameState.learn_letter(Net.local_slot(), letter)
+	if not _practicing:
+		GameState.learn_letter(Net.local_slot(), letter)
 	_celebrating = true
 	_room.progress = 1.0
 	_wizard.play(&"cast")
@@ -75,7 +113,10 @@ func _on_letter_confirmed(letter: String, _quality: float) -> void:
 	tween.tween_callback(func():
 		_room.celebrate = 0.0
 		_celebrating = false
-		_show_lesson(current_lesson()))
+		if _practicing:
+			_end_practice()
+		else:
+			_show_lesson(current_lesson()))
 
 
 func _on_letter_progress(letter: String, progress: float) -> void:
