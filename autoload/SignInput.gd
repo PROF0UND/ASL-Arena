@@ -1,7 +1,8 @@
 extends Node
 ## Turns "which hand shape is being held" into game events.
 ## Two sources, keyboard first:
-##   - Keyboard: hold a letter key to hold that sign. Shift + letter = a sloppy sign (low confidence).
+##   - Keyboard: hold Space + a letter key to hold that sign (Space + Shift + letter = a sloppy sign).
+##     Space is needed because WASD also moves the player.
 ##   - The Python tracker, as JSON over UDP on 127.0.0.1:4242 (see README for the packet format).
 ## Hold-to-confirm lives here so the dojo and the arena behave the same way.
 
@@ -97,9 +98,14 @@ func _read_tracker() -> void:
 	hand_updated.emit(landmarks if landmarks is Array else [], hand_present)
 
 
+## True while Space is held: the player is signing with the keyboard, so they shouldn't walk.
+func keyboard_signing() -> bool:
+	return Input.is_physical_key_pressed(KEY_SPACE)
+
+
 func _held_key_letter() -> String:
 	var focus := get_viewport().gui_get_focus_owner()
-	if focus is LineEdit or focus is TextEdit:
+	if focus is LineEdit or focus is TextEdit or not keyboard_signing():
 		return ""
 	for i in 26:
 		if Input.is_physical_key_pressed((KEY_A + i) as Key):

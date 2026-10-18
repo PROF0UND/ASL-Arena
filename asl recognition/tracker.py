@@ -9,7 +9,7 @@ The game does the hold-to-confirm; this script just reports what it sees each fr
 Usage (from this folder, inside the Python 3.12 venv):
     python tracker.py                    # preview window, the letters the game uses
     python tracker.py --no-preview       # no OpenCV window
-    python tracker.py --letters LWKPXUI  # only ever report these letters
+    python tracker.py --letters LWKPUI  # only ever report these letters
     python tracker.py --mirror-input     # classify the mirrored image (try this if accuracy is poor)
 """
 import argparse
@@ -94,7 +94,7 @@ def parse_args():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=4242)
     parser.add_argument("--camera", type=int, default=0, help="webcam index")
-    parser.add_argument("--letters", default="LWKPXUI", help='letters to report, or "all"')
+    parser.add_argument("--letters", default="LWKPUI", help='letters to report, or "all"')
     parser.add_argument("--smooth", type=int, default=5, help="average predictions over this many frames")
     parser.add_argument("--mirror-input", action="store_true", help="classify the mirrored camera image")
     parser.add_argument("--no-preview", action="store_true", help="don't open an OpenCV window")

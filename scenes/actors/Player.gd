@@ -4,8 +4,7 @@ extends Node2D
 
 const BODY_CENTER := Vector2(0, -14)
 const PROGRESS_RING_CENTER := Vector2(0, -46)
-const HUE_SWAP := preload("res://assets/shaders/hue_swap.gdshader")
-const P2_HUE_SHIFT := 0.37  # blue robe -> red robe
+const Robe := preload("res://scenes/actors/robe.gd")
 const RUN_SPEED_THRESHOLD := 5.0  # px/s; slower than this counts as standing
 
 var slot := 1
@@ -25,7 +24,6 @@ var _last_position := Vector2.ZERO
 var _casting := false  # the cast animation plays out before run/idle take over again
 
 @onready var _sprite: AnimatedSprite2D = $Sprite
-@onready var _name_label: Label = $Name
 @onready var _prompt: Label = $Prompt
 @onready var _camera: Camera2D = $Camera2D
 
@@ -42,12 +40,8 @@ func setup(p_slot: int, p_peer: int, dummy := false) -> void:
 func _ready() -> void:
 	_remote_target = position
 	_last_position = position
-	_name_label.text = "DUMMY" if is_dummy else "P%d" % slot
 	if slot == 2:
-		var mat := ShaderMaterial.new()
-		mat.shader = HUE_SWAP
-		mat.set_shader_parameter("hue_shift", P2_HUE_SHIFT)
-		_sprite.material = mat
+		_sprite.material = Robe.for_slot(slot)  # P2 wears red
 	_sprite.animation_finished.connect(func(): _casting = false)
 	add_to_group("players")
 	if is_local():
@@ -72,8 +66,9 @@ func _physics_process(delta: float) -> void:
 		_update_animation(delta)
 		return
 
-	if not input_locked and GameState.phase != GameState.Phase.OVER:
-		var dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	# Holding Space is the keyboard signing stance (Space + letter), so feet stay planted.
+	if not input_locked and GameState.phase != GameState.Phase.OVER and not SignInput.keyboard_signing():
+		var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		_move(dir * Config.PLAYER_SPEED * delta)
 
 	_update_animation(delta)

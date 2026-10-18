@@ -20,7 +20,7 @@ var _hint_timer := 0.0  # > 0 means the hint card hides itself when this runs ou
 @onready var _tracker_status: Label = $CameraPanel/TrackerStatus
 @onready var _hint_card: Panel = $HintCard
 @onready var _hint_letter: Label = $HintCard/HintLetter
-@onready var _hint_text: Label = $HintCard/HintText
+@onready var _hint_sprite: TextureRect = $HintCard/HintSprite
 @onready var _signs: Label = $Signs
 @onready var _game_over: Panel = $GameOver
 @onready var _result: Label = $GameOver/Result
@@ -52,7 +52,7 @@ func _process(delta: float) -> void:
 	var in_fight := GameState.phase >= GameState.Phase.FIGHT
 	_hp_bars.visible = in_fight
 	_camera_panel.visible = in_fight or _world.dojo_ui.visible
-	_tracker_status.text = "tracker connected" if SignInput.tracker_connected else "no tracker: use keyboard"
+	_tracker_status.text = "tracker connected" if SignInput.tracker_connected else "no tracker: Space + key"
 	if not SignInput.tracker_connected:
 		_hand_view.set_landmarks([], false)
 
@@ -68,6 +68,10 @@ func _process(delta: float) -> void:
 			_hide_hint()
 
 	_signs.text = _signs_text()
+	# The dojo has its own sign toolbar and title; only keep the banner for guard warnings.
+	var in_dojo: bool = _world.dojo_ui.visible
+	_signs.visible = not in_dojo
+	_banner.visible = not in_dojo or GameState.phase == GameState.Phase.WAITING
 
 
 func flash(text: String) -> void:
@@ -89,7 +93,8 @@ func show_game_over(text: String) -> void:
 
 func _show_hint(letter: String) -> void:
 	_hint_letter.text = letter
-	_hint_text.text = Config.SIGN_HINTS.get(letter, "")
+	_hint_sprite.texture = Config.sign_texture(letter)
+	_hint_sprite.visible = _hint_sprite.texture != null
 	_hint_card.visible = true
 	_hint_timer = 0.0
 

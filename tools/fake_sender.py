@@ -22,7 +22,7 @@ import socket
 import threading
 import time
 
-LETTERS = list("LWIUKXP")
+LETTERS = list("LWIUKP")
 SEND_HZ = 30
 
 

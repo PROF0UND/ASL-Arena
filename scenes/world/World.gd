@@ -20,6 +20,7 @@ var _drop_timer := Config.DROP_INTERVAL
 var _was_at_door := false
 var _was_in_portal := false
 var _traveling := false
+var _queued_transitions: Array[Callable] = []
 var _fade: ColorRect
 
 @onready var arena = $Zones/Arena
@@ -142,15 +143,33 @@ func _check_portals(me) -> void:
 
 ## Fade to black, move the local player, fade back in.
 func travel(me, destination: Vector2) -> void:
+	transition(func(): me.teleport(destination))
+
+
+## Fade to black, run `midpoint` (move the player, swap screens...), fade back in.
+## A transition requested mid-fade waits its turn instead of being dropped.
+func transition(midpoint: Callable) -> void:
+	if _traveling:
+		_queued_transitions.append(midpoint)
+		return
 	_traveling = true
-	me.input_locked = true
+	var me = local_player()
+	if me:
+		me.input_locked = true
 	var tween := create_tween()
 	tween.tween_property(_fade, "color:a", 1.0, FADE_TIME)
-	tween.tween_callback(func(): me.teleport(destination))
+	tween.tween_callback(midpoint)
 	tween.tween_property(_fade, "color:a", 0.0, FADE_TIME)
-	tween.tween_callback(func():
+	tween.tween_callback(_transition_done)
+
+
+func _transition_done() -> void:
+	_traveling = false
+	var me = local_player()
+	if me and not dojo_ui.visible:
 		me.input_locked = false
-		_traveling = false)
+	if not _queued_transitions.is_empty():
+		transition(_queued_transitions.pop_front())
 
 
 func _build_fade() -> void:
@@ -170,9 +189,17 @@ func _check_dojo_door(me) -> void:
 	if GameState.phase >= GameState.Phase.FIGHT:
 		return
 	var at_door: bool = get_home(me.slot).door_global().has_point(me.global_position)
-	if at_door and not _was_at_door and not dojo_ui.visible:
-		dojo_ui.open()
+	if at_door and not _was_at_door and not dojo_ui.visible and not _traveling:
+		enter_dojo()
 	_was_at_door = at_door
+
+
+func enter_dojo() -> void:
+	transition(dojo_ui.open)
+
+
+func leave_dojo() -> void:
+	transition(dojo_ui.close)
 
 
 # --- Guards ---
@@ -181,8 +208,8 @@ func _on_escort_started(slot: int) -> void:
 	var target = players.get(slot)
 	if target == null:
 		return
-	if target.is_local():
-		dojo_ui.close()
+	if target.is_local() and dojo_ui.visible:
+		leave_dojo()
 	# Guards walk in from the edge of the late player's screen that faces the arena.
 	var spawn_at: Vector2 = target.global_position
 	var zone = zone_at(target.global_position)

@@ -27,16 +27,16 @@ On Windows, click "Allow" on the firewall prompt the first time.
 
 | Action | Input |
 |---|---|
-| Move | Arrow keys |
-| Hold a sign | Webcam via the tracker, **or** hold the letter key |
-| Sloppy sign (weak fireball) | Shift + letter key |
+| Move | **WASD** (or arrow keys), so your right hand stays free for signing |
+| Hold a sign | Webcam via the tracker, **or** hold **Space + the letter key** (Space keeps you standing still) |
+| Sloppy sign (weak fireball) | Space + Shift + letter key |
 | Leave dojo | Esc |
 
 ## Game flow
 
-1. Each player starts in their own home. Walk onto the yellow door to enter the **dojo**. The sensei
-   teaches the letters `L W I U K X P` (the ones the model recognizes best) one at a time:
-   hold the sign to learn it.
+1. Each player starts in their own home. Walk up to the house door to enter the **dojo**. The board shows one
+   hand sign at a time from `L W I U K P` (the letters the model recognizes best): hold it to learn it.
+   Hand-sign pictures live in `assets/signs/<letter>.png` (64×64); a letter without a picture shows the letter.
 2. Walk out through your home's gate onto the **bridge** (NPCs there give tips), then off the far end into the **arena**.
    Each area is its own screen; walking through a gate or off the bridge fades to the next one. The arena is one-way.
 3. When one player reaches the arena, the other has **10 seconds**. After that, guards walk onto their screen and escort them in.
@@ -79,7 +79,7 @@ tools/play.sh --quick-duel                      # Linux/macOS: starts the tracke
 ```
 
 On Windows, run `.venv\Scripts\python tracker.py` in one terminal and the game in another.
-Useful tracker flags: `--camera 1` (other webcam), `--no-preview`, `--letters LWIUKXP`,
+Useful tracker flags: `--camera 1` (other webcam), `--no-preview`, `--letters LWIUKP`,
 `--mirror-input` (classify the mirrored image; try it if letters are recognized poorly).
 
 ## Tracker → game contract (UDP JSON, 127.0.0.1:4242, ~30/s)

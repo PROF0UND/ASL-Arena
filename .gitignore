@@ -8,3 +8,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Monocraft source repo (the game uses assets/fonts/Monocraft.ttf)
+Monocraft/

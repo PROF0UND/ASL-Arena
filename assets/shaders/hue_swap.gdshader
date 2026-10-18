@@ -5,6 +5,8 @@ shader_type canvas_item;
 uniform float hue_shift : hint_range(0.0, 1.0) = 0.0;
 uniform float hue_min : hint_range(0.0, 1.0) = 0.5;
 uniform float hue_max : hint_range(0.0, 1.0) = 0.8;
+uniform float saturation : hint_range(0.0, 2.0) = 1.0;  // robe saturation multiplier (0 = grey)
+uniform float value : hint_range(0.0, 2.0) = 1.0;       // robe brightness multiplier
 
 vec3 rgb2hsv(vec3 c) {
 	vec4 k = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
@@ -24,6 +26,8 @@ void fragment() {
 	vec3 hsv = rgb2hsv(COLOR.rgb);
 	if (hsv.y > 0.15 && hsv.x >= hue_min && hsv.x <= hue_max) {
 		hsv.x = fract(hsv.x + hue_shift);
+		hsv.y = clamp(hsv.y * saturation, 0.0, 1.0);
+		hsv.z = clamp(hsv.z * value, 0.0, 1.0);
 		COLOR.rgb = hsv2rgb(hsv);
 	}
 }

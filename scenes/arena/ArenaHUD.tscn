@@ -15,6 +15,18 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.99, 0.95, 0.82, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.42, 0.25, 0.12, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
 bg_color = Color(0.15, 0.05, 0.05, 0.9)
 
@@ -118,38 +130,41 @@ text = "no tracker: use keyboard"
 [node name="HintCard" type="Panel" parent="."]
 visible = false
 offset_left = 8.0
-offset_top = 200.0
-offset_right = 200.0
+offset_top = 184.0
+offset_right = 120.0
 offset_bottom = 330.0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
 [node name="HintTitle" type="Label" parent="HintCard"]
-offset_left = 8.0
+offset_left = 6.0
 offset_top = 4.0
-offset_right = 184.0
+offset_right = 106.0
 offset_bottom = 16.0
+theme_override_colors/font_color = Color(0.42, 0.25, 0.12, 1)
 theme_override_font_sizes/font_size = 8
-text = "Sign this:"
+text = "Sign this"
+horizontal_alignment = 1
 
-[node name="HintLetter" type="Label" parent="HintCard"]
+[node name="HintSprite" type="TextureRect" parent="HintCard"]
 offset_left = 8.0
 offset_top = 16.0
-offset_right = 184.0
-offset_bottom = 64.0
-theme_override_colors/font_color = Color(1, 0.95, 0.5, 1)
-theme_override_font_sizes/font_size = 40
-text = "A"
+offset_right = 104.0
+offset_bottom = 112.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HintLetter" type="Label" parent="HintCard"]
+offset_left = 6.0
+offset_top = 112.0
+offset_right = 106.0
+offset_bottom = 140.0
+theme_override_colors/font_color = Color(0.29, 0.17, 0.09, 1)
+theme_override_font_sizes/font_size = 16
+text = "L"
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="HintText" type="Label" parent="HintCard"]
-offset_left = 8.0
-offset_top = 66.0
-offset_right = 184.0
-offset_bottom = 126.0
-theme_override_font_sizes/font_size = 8
-autowrap_mode = 3
 
 [node name="Signs" type="Label" parent="."]
 offset_left = 8.0

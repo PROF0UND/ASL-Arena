@@ -3,17 +3,10 @@ extends Node
 
 # --- Signs ---
 # The letters the hand-tracking model recognizes reliably (see asl recognition/).
-const STARTER_LETTERS := ["L", "W", "I", "U", "K", "X", "P"]
-const QUICK_DUEL_LETTERS := ["L", "W", "I", "U", "X"]
-const SIGN_HINTS := {
-	"L": "Index finger up, thumb out to the side: an L.",
-	"W": "Index, middle and ring fingers up and spread apart.",
-	"I": "Make a fist and raise only your pinky.",
-	"U": "Index and middle fingers straight up, pressed together.",
-	"K": "Index and middle fingers up in a V, with your thumb pressed between them.",
-	"X": "Make a fist, then raise your index finger bent like a hook.",
-	"P": "Make a K, then point it down: index forward, middle finger down, thumb between.",
-}
+const STARTER_LETTERS := ["L", "W", "I", "U", "K", "P"]
+const QUICK_DUEL_LETTERS := ["L", "W", "I", "U"]
+## Hand-sign pictures, one per letter (assets/signs/<letter>.png, 64x64). Letters without one show the letter.
+const SIGN_SPRITE_DIR := "res://assets/signs/"
 
 # --- Sign input ---
 const TRACKER_PORT := 4242
@@ -54,7 +47,7 @@ const FIREBALL_TIERS := {
 # --- NPCs ---
 const NPC_ADVICE := [
 	"Hold each sign steady for half a second. Rushing it won't count!",
-	"Keep your hand inside the camera frame. The sensei can't read what it can't see.",
+	"Keep your hand inside the camera frame. It can't read what it can't see.",
 	"A clean sign throws a big fireball. A sloppy one barely sparks.",
 	"K and P are the same shape. P just points down.",
 	"Rushing into the arena with one sign? Your fireballs will be few and far between.",
@@ -62,6 +55,12 @@ const NPC_ADVICE := [
 	"Good lighting makes your signs easier to read.",
 	"U keeps two fingers together. W spreads three apart.",
 ]
+
+
+## The hand-sign picture for a letter, or null if it hasn't been drawn yet.
+func sign_texture(letter: String) -> Texture2D:
+	var path := SIGN_SPRITE_DIR + letter + ".png"
+	return load(path) if ResourceLoader.exists(path) else null
 
 
 func tier_for(quality: float) -> String:
