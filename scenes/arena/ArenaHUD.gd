@@ -2,6 +2,8 @@ extends CanvasLayer
 ## On-screen info: HP bars, status banner, camera panel, hint card, learned signs, game over.
 
 const FLASH_TIME := 1.5
+const GOOSE_FRAMES := preload("res://assets/characters/goose_frames.tres")
+const GOOSE_SPACING := 50.0  # between geese around the end-screen box
 const MESSAGE_BOTTOM := 332.0  # message box sits bottom-center, clear of NPC speech bubbles
 const LEARNED_HINT_TIME := 4.0
 
@@ -49,13 +51,14 @@ func _ready() -> void:
 	_combat.fired.connect(func(_l: String, tier: String): flash("%s fireball!" % tier.capitalize()))
 	_back_button.pressed.connect(Net.leave_to_menu)
 	_hint_card.visible = false
+	_surround_with_geese(_game_over_box)
 	_game_over.visible = false
 
 
 func _process(delta: float) -> void:
 	var in_fight := GameState.phase >= GameState.Phase.FIGHT
 	_hp_bars.visible = in_fight
-	_camera_panel.visible = in_fight or _world.dojo_ui.visible
+	_camera_panel.visible = GameState.phase == GameState.Phase.FIGHT or _world.dojo_ui.visible  # hidden on the end screen
 	_tracker_status.text = "tracker connected" if SignInput.tracker_connected else "no tracker: Space + key"
 	if not SignInput.tracker_connected:
 		_hand_view.set_landmarks([], false)
@@ -104,6 +107,34 @@ func show_learned(letter: String) -> void:
 	_hint_timer = LEARNED_HINT_TIME
 
 
+## Ring a box with flapping geese (top row perched on it, a row underneath, two on each side),
+## alternating which way they face and each flapping on its own beat.
+func _surround_with_geese(box: Control) -> void:
+	var w := box.size.x
+	var h := box.size.y
+	var rows: Array = [[], [], [], []]  # top, bottom, left, right: each goose's feet
+	var x := 0.0
+	while x <= w + 0.5:
+		rows[0].append(Vector2(x, 2))       # perched on the top edge
+		rows[1].append(Vector2(x, h + 52))  # standing underneath
+		x += GOOSE_SPACING
+	for y in [h * 0.42, h * 0.8]:
+		rows[2].append(Vector2(-30, y))
+		rows[3].append(Vector2(w + 30, y))
+	for row in rows:
+		for i in row.size():
+			var goose := AnimatedSprite2D.new()
+			goose.sprite_frames = GOOSE_FRAMES
+			goose.scale = Vector2(2, 2)
+			goose.offset = Vector2(0, -13)  # feet at the spot
+			goose.position = row[i]
+			goose.flip_h = i % 2 == 1        # neighbors face opposite ways
+			goose.speed_scale = randf_range(0.8, 1.3)
+			box.add_child(goose)
+			goose.play(&"default")
+			goose.frame = randi() % 2
+
+
 func show_game_over(title: String, subtitle := "") -> void:
 	_result.text = title
 	_subtitle.text = subtitle
@@ -124,6 +155,7 @@ func _show_hint(letter: String) -> void:
 
 func _hide_hint() -> void:
 	_hint_card.visible = false
+	_surround_with_geese(_game_over_box)
 	_hint_timer = 0.0
 
 

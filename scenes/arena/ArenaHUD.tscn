@@ -4,7 +4,6 @@
 [ext_resource type="Script" path="res://scenes/arena/HandView.gd" id="2_hand"]
 [ext_resource type="Theme" path="res://assets/ui/menu_theme.tres" id="4_menu_theme"]
 [ext_resource type="Script" path="res://scenes/ui/BoilBox.gd" id="5_boil"]
-[ext_resource type="SpriteFrames" path="res://assets/characters/goose_frames.tres" id="6_goose"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.08, 0.08, 0.1, 0.85)
@@ -252,11 +251,3 @@ offset_top = 96.0
 offset_right = 220.0
 offset_bottom = 132.0
 text = "Back to menu"
-
-[node name="Goose" type="AnimatedSprite2D" parent="GameOver/Box"]
-position = Vector2(286, -4)
-scale = Vector2(2, 2)
-sprite_frames = ExtResource("6_goose")
-offset = Vector2(0, -13)
-flip_h = true
-autoplay = "default"
