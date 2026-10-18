@@ -22,6 +22,7 @@ var _remote_target := Vector2.ZERO
 var _send_timer := 0.0
 var _reported_in_arena := false
 var _last_position := Vector2.ZERO
+var _casting := false  # the cast animation plays out before run/idle take over again
 
 @onready var _sprite: AnimatedSprite2D = $Sprite
 @onready var _name_label: Label = $Name
@@ -47,6 +48,7 @@ func _ready() -> void:
 		mat.shader = HUE_SWAP
 		mat.set_shader_parameter("hue_shift", P2_HUE_SHIFT)
 		_sprite.material = mat
+	_sprite.animation_finished.connect(func(): _casting = false)
 	add_to_group("players")
 	if is_local():
 		add_to_group("local_player")
@@ -156,7 +158,7 @@ func _update_camera_limits() -> void:
 func _update_animation(delta: float) -> void:
 	var moved := global_position - _last_position
 	_last_position = global_position
-	if delta <= 0.0:
+	if delta <= 0.0 or _casting:
 		return
 	if moved.length() / delta > RUN_SPEED_THRESHOLD:
 		_sprite.play(&"run")
@@ -172,6 +174,16 @@ func show_prompt(letter: String) -> void:
 	_prompt.text = letter
 	_prompt.visible = letter != ""
 	hold_progress = 0.0
+
+
+## Play the casting animation facing the opponent. Sent by the owner so both screens see it.
+@rpc("authority", "call_local", "reliable")
+func cast() -> void:
+	var foe = _world().opponent_of(slot)
+	if foe and absf(foe.global_position.x - global_position.x) > 1.0:
+		_sprite.flip_h = foe.global_position.x < global_position.x
+	_casting = true
+	_sprite.play(&"cast")
 
 
 func flash() -> void:

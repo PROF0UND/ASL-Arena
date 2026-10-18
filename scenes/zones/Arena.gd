@@ -1,47 +1,29 @@
 @tool
-extends Node2D
-## The circular arena. The node position is its center.
-
-const FLOOR := Color(0.36, 0.62, 0.36)
-const RING := Color(0.92, 0.86, 0.60)
-const ENTRY_MARGIN := 24.0  # how far past the edge counts as "in the arena"
-
-@export var radius := 220.0:
-	set(value):
-		radius = value
-		queue_redraw()
+extends "res://scenes/zones/MapZone.gd"
+## The arena screen: a painted MapZone plus where fighters start and where sign drops appear.
+## Like other screens, the node position is the image's top-left corner and walk_rect is the fighting area.
 
 
 func _ready() -> void:
-	add_to_group("zone")
+	super()
+	add_to_group("arena")
 
 
-func contains_point(p: Vector2) -> bool:
-	return p.distance_to(global_position) <= radius
+func center() -> Vector2:
+	return global_position + walk_rect.get_center()
 
 
-## The arena's screen. At least one screen wide so the camera never shows past it sideways.
-func bounds() -> Rect2:
-	var half := Vector2(maxf(radius + 10.0, 160.0), radius + 10.0)
-	return Rect2(global_position - half, half * 2.0)
-
-
+## Counts as "in the arena" for the guard countdown.
 func is_inside(p: Vector2) -> bool:
-	return p.distance_to(global_position) <= radius - ENTRY_MARGIN
+	return contains_point(p)
 
 
 ## Where each player stands when the fight starts: P1 on the north side, P2 on the south.
 func start_point(slot: int) -> Vector2:
-	return global_position + Vector2(0, -1 if slot == 1 else 1) * radius * 0.35
+	return center() + Vector2(0, -1 if slot == 1 else 1) * walk_rect.size.y * 0.25
 
 
+## A random spot well inside the fighting area.
 func random_drop_point() -> Vector2:
-	var r := sqrt(randf()) * radius * 0.6
-	return global_position + Vector2.from_angle(randf() * TAU) * r
-
-
-func _draw() -> void:
-	draw_circle(Vector2.ZERO, radius, FLOOR)
-	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 96, RING, 6.0)
-	draw_string(ThemeDB.fallback_font, Vector2(-radius, -radius + 40), "ARENA",
-			HORIZONTAL_ALIGNMENT_CENTER, radius * 2, 16, RING)
+	var area := walk_rect.grow(-24)
+	return global_position + area.position + Vector2(randf() * area.size.x, randf() * area.size.y)

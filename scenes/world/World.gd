@@ -188,7 +188,7 @@ func _on_escort_started(slot: int) -> void:
 	var zone = zone_at(target.global_position)
 	if zone:
 		var b: Rect2 = zone.bounds()
-		var arena_is_below: bool = b.get_center().y < arena.global_position.y
+		var arena_is_below: bool = b.get_center().y < arena.center().y
 		spawn_at.y = b.end.y - 4.0 if arena_is_below else b.position.y + 4.0
 	for offset in GUARD_OFFSETS:
 		var guard = GUARD_SCENE.instantiate()

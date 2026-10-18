@@ -63,14 +63,13 @@ position = Vector2(132, 80)
 position = Vector2(190, 160)
 
 [node name="Arena" parent="Zones" instance=ExtResource("2_arena")]
-position = Vector2(160, 900)
-radius = 150.0
+position = Vector2(0, 780)
 
 [node name="FromNorth" type="Marker2D" parent="Zones/Arena"]
-position = Vector2(0, -120)
+position = Vector2(160, 40)
 
 [node name="FromSouth" type="Marker2D" parent="Zones/Arena"]
-position = Vector2(0, 120)
+position = Vector2(160, 212)
 
 [node name="Bridge2" parent="Zones" instance=ExtResource("3_zone")]
 position = Vector2(0, 1200)

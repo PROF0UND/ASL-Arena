@@ -44,6 +44,7 @@ const DROP_PICKUP_RADIUS := 12.0
 const QUALITY_WEAK_BELOW := 0.6
 const QUALITY_STRONG_ABOVE := 0.85
 const FIREBALL_LIFETIME := 2.5
+const CAST_RELEASE_TIME := 0.25  # fireball leaves on the cast animation's 4th frame (12 fps)
 const FIREBALL_TIERS := {
 	"weak": {"damage": 4, "speed": 110.0, "radius": 3.0, "color": Color(1.0, 0.8, 0.45)},
 	"medium": {"damage": 10, "speed": 150.0, "radius": 4.0, "color": Color(1.0, 0.55, 0.15)},

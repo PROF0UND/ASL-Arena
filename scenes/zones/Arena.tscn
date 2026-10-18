@@ -1,6 +1,16 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/zones/Arena.gd" id="1_arena"]
+[ext_resource type="Texture2D" path="res://assets/arena/arena.png" id="2_bg"]
 
 [node name="Arena" type="Node2D"]
 script = ExtResource("1_arena")
+background = ExtResource("2_bg")
+frames = 1
+walk_rect = Rect2(28, 16, 266, 206)
+spawn_offset = Vector2(160, 120)
+
+[node name="Background" type="Sprite2D" parent="."]
+show_behind_parent = true
+texture = ExtResource("2_bg")
+centered = false

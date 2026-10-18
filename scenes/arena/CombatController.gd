@@ -86,9 +86,13 @@ func _on_letter_confirmed(letter: String, quality: float) -> void:
 		return
 	var me = _world.local_player()
 	cooldowns[letter] = Config.LETTER_COOLDOWN
-	_world.request_fireball(me.slot, quality)
 	fired.emit(letter, Config.tier_for(quality))
 	_clear_prompt(me)
+	me.cast.rpc()
+	# Release the fireball on the arm-out frame of the cast animation.
+	await get_tree().create_timer(Config.CAST_RELEASE_TIME).timeout
+	if is_instance_valid(me):
+		_world.request_fireball(me.slot, quality)
 
 
 func _on_letter_progress(letter: String, progress: float) -> void:
