@@ -48,6 +48,12 @@ const FIREBALL_TIERS := {
 	"strong": {"damage": 28, "speed": 200.0, "radius": 6.0, "color": Color(1.0, 0.25, 0.05), "shake": 4.0, "shake_time": 0.35},
 }
 
+# --- Goose ---
+const GOOSE_CHANCE := 0.3       # chance a strong attack comes out as a homing goose instead of a fireball
+const GOOSE_SPEED := 100.0      # a bit faster than walking (PLAYER_SPEED), much slower than a strong fireball
+const GOOSE_TURN := 240.0       # how hard it can steer, px/s^2: higher = harder to dodge
+const GOOSE_LIFETIME := 4.0
+
 # --- NPCs ---
 const NPC_ADVICE := [
 	"Hold each sign steady for half a second. Rushing it won't count!",

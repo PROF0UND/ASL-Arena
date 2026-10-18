@@ -8,6 +8,7 @@ const PLAYER_SCENE := preload("res://scenes/actors/Player.tscn")
 const GUARD_SCENE := preload("res://scenes/actors/Guard.tscn")
 const FIREBALL_SCENE := preload("res://scenes/arena/Fireball.tscn")
 const DROP_SCENE := preload("res://scenes/arena/SignDrop.tscn")
+const GOOSE_SCENE := preload("res://scenes/arena/Goose.tscn")
 const GUARD_OFFSETS := [Vector2(-20, 0), Vector2(20, 0)]
 const FADE_TIME := 0.2
 
@@ -246,13 +247,21 @@ func _fire(slot: int, quality: float) -> void:
 	var from: Vector2 = shooter.center()
 	var dir: Vector2 = (target.center() - from).normalized()
 	_next_id += 1
-	_spawn_fireball.rpc(_next_id, slot, from, dir, Config.tier_for(quality))
+	var tier := Config.tier_for(quality)
+	var goose := tier == "strong" and randf() < Config.GOOSE_CHANCE
+	_spawn_fireball.rpc(_next_id, slot, from, dir, tier, goose)
 
 
 @rpc("authority", "call_local", "reliable")
-func _spawn_fireball(id: int, slot: int, from: Vector2, dir: Vector2, tier: String) -> void:
-	var fb = FIREBALL_SCENE.instantiate()
-	fb.setup(id, slot, dir, tier)
+func _spawn_fireball(id: int, slot: int, from: Vector2, dir: Vector2, tier: String, goose := false) -> void:
+	var fb
+	if goose:
+		fb = GOOSE_SCENE.instantiate()
+		fb.setup(id, slot, dir, tier, opponent_of(slot))
+		hud.flash("HONK!")
+	else:
+		fb = FIREBALL_SCENE.instantiate()
+		fb.setup(id, slot, dir, tier)
 	fb.position = from
 	_fireballs_root.add_child(fb)
 	fireballs[id] = fb
