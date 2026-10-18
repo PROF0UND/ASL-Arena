@@ -2,6 +2,9 @@ extends Node2D
 ## Sometimes replaces a strong fireball: a goose that chases its target instead of flying straight.
 ## Same interface as Fireball.gd (id, owner_slot, tier, damage, radius) so World.gd treats them alike.
 ## Every peer steers it toward its own copy of the target; only the host checks hits.
+## It honks nonstop (HONK HONK HONK...) until it hits someone or gives up.
+
+const HONK := preload("res://music/honk-sound.mp3")
 
 var id := 0
 var owner_slot := 1
@@ -12,8 +15,17 @@ var radius := 7.0
 var _target: Node2D
 var _velocity := Vector2.ZERO
 var _life := Config.GOOSE_LIFETIME
+var _honk_timer := 0.0
+var _honker := AudioStreamPlayer.new()
 
 @onready var _sprite: AnimatedSprite2D = $Sprite
+
+
+func _ready() -> void:
+	_honker.stream = HONK
+	_honker.max_polyphony = 4  # honks overlap into one chaotic racket
+	_honker.volume_db = Config.GOOSE_HONK_VOLUME_DB
+	add_child(_honker)  # freed with the goose, so the honking stops the instant it hits
 
 
 func setup(p_id: int, p_owner_slot: int, dir: Vector2, p_tier: String, target: Node2D) -> void:
@@ -31,6 +43,11 @@ func _process(delta: float) -> void:
 		var desired: Vector2 = (_target.center() - global_position).normalized() * Config.GOOSE_SPEED
 		_velocity = _velocity.move_toward(desired, Config.GOOSE_TURN * delta)
 	position += _velocity * delta
+	_honk_timer -= delta
+	if _honk_timer <= 0.0:
+		_honk_timer = randf_range(Config.GOOSE_HONK_GAP_MIN, Config.GOOSE_HONK_GAP_MAX)
+		_honker.pitch_scale = randf_range(0.9, 1.25)
+		_honker.play()
 	if absf(_velocity.x) > 1.0:
 		_sprite.flip_h = _velocity.x < 0.0  # the sprite faces right
 	_life -= delta

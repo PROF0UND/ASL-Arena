@@ -53,6 +53,9 @@ const GOOSE_CHANCE := 0.3       # chance a strong attack comes out as a homing g
 const GOOSE_SPEED := 100.0      # a bit faster than walking (PLAYER_SPEED), much slower than a strong fireball
 const GOOSE_TURN := 240.0       # how hard it can steer, px/s^2: higher = harder to dodge
 const GOOSE_LIFETIME := 4.0
+const GOOSE_HONK_GAP_MIN := 0.09  # seconds between honks while it chases (random in this range)
+const GOOSE_HONK_GAP_MAX := 0.16
+const GOOSE_HONK_VOLUME_DB := -6.0
 
 # --- NPCs ---
 const NPC_ADVICE := [

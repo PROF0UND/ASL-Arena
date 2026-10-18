@@ -258,10 +258,11 @@ func _spawn_fireball(id: int, slot: int, from: Vector2, dir: Vector2, tier: Stri
 	if goose:
 		fb = GOOSE_SCENE.instantiate()
 		fb.setup(id, slot, dir, tier, opponent_of(slot))
-		hud.flash("HONK!")
+		hud.flash("HONK HONK HONK!")
 	else:
 		fb = FIREBALL_SCENE.instantiate()
 		fb.setup(id, slot, dir, tier)
+		Audio.play_sfx("fireball_heavy" if tier == "strong" else "fireball_small", -4.0 if tier == "weak" else 0.0)
 	fb.position = from
 	_fireballs_root.add_child(fb)
 	fireballs[id] = fb
@@ -273,6 +274,8 @@ func _fireball_hit(id: int, target_slot: int) -> void:
 	var fb = fireballs.get(id)
 	if fb:
 		var stats: Dictionary = Config.FIREBALL_TIERS[fb.tier]
+		if fb.scene_file_path == GOOSE_SCENE.resource_path:
+			Audio.play_sfx("honk")
 		var me = local_player()
 		if me:
 			me.shake(stats.shake, stats.shake_time)

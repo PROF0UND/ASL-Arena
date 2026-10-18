@@ -144,6 +144,7 @@ func _update_goose(delta: float) -> void:
 		create_tween().tween_property(target, "modulate", Color.WHITE, 0.25).from(Color(4, 4, 4))
 		_goose_target.wait = maxf(_goose_target.wait, 0.5)
 		_shake = maxf(_shake, 1.5)
+		Audio.play_sfx("honk", -8.0)
 		_goose_velocity = -_goose_velocity * 0.4
 		_goose_pause = GOOSE_PAUSE
 		_goose.stop()

@@ -21,6 +21,7 @@ Config="*res://autoload/Config.gd"
 Net="*res://autoload/Net.gd"
 GameState="*res://autoload/GameState.gd"
 SignInput="*res://autoload/SignInput.gd"
+Audio="*res://autoload/Audio.gd"
 
 [display]
 
