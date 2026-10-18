@@ -263,6 +263,10 @@ func _spawn_fireball(id: int, slot: int, from: Vector2, dir: Vector2, tier: Stri
 func _fireball_hit(id: int, target_slot: int) -> void:
 	var fb = fireballs.get(id)
 	if fb:
+		var stats: Dictionary = Config.FIREBALL_TIERS[fb.tier]
+		var me = local_player()
+		if me:
+			me.shake(stats.shake, stats.shake_time)
 		fireballs.erase(id)
 		fb.queue_free()
 	var target = players.get(target_slot)

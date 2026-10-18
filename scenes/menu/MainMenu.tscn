@@ -1,6 +1,9 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/menu/MainMenu.gd" id="1_menu"]
+[ext_resource type="Theme" path="res://assets/ui/menu_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://scenes/menu/AttractMode.gd" id="3_attract"]
+[ext_resource type="Script" path="res://scenes/menu/TitleSign.gd" id="4_sign"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -9,71 +12,122 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_theme")
 script = ExtResource("1_menu")
 
-[node name="Background" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.22, 0.45, 0.25, 1)
+[node name="Attract" type="Node2D" parent="."]
+scale = Vector2(2, 2)
+script = ExtResource("3_attract")
 
-[node name="Title" type="Label" parent="."]
-layout_mode = 0
-offset_left = 120.0
-offset_top = 36.0
-offset_right = 520.0
-offset_bottom = 84.0
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 36
-text = "ASL Arena"
-horizontal_alignment = 1
-vertical_alignment = 1
+[node name="Actors" type="Node2D" parent="Attract"]
+y_sort_enabled = true
 
-[node name="Subtitle" type="Label" parent="."]
+[node name="TitleSign" type="Control" parent="."]
 layout_mode = 0
-offset_left = 120.0
-offset_top = 86.0
-offset_right = 520.0
-offset_bottom = 104.0
-theme_override_font_sizes/font_size = 10
-text = "Learn the signs in the dojo. Win the duel in the arena."
-horizontal_alignment = 1
+offset_right = 320.0
+offset_bottom = 180.0
+mouse_filter = 2
+script = ExtResource("4_sign")
 
-[node name="Buttons" type="VBoxContainer" parent="."]
+[node name="Buttons" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 220.0
-offset_top = 124.0
-offset_right = 420.0
-offset_bottom = 330.0
-theme_override_constants/separation = 6
+offset_left = 62.0
+offset_top = 290.0
+offset_right = 578.0
+offset_bottom = 334.0
+theme_override_constants/separation = 12
 
 [node name="QuickDuel" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(120, 44)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Quick Duel (vs dummy)"
+text = "Quick Duel"
 
 [node name="Host" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(120, 44)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Host game"
-
-[node name="Address" type="LineEdit" parent="Buttons"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "127.0.0.1"
-placeholder_text = "Host IP address"
+text = "Host"
 
 [node name="Join" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(120, 44)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Join game"
+text = "Join"
 
-[node name="Status" type="Label" parent="Buttons"]
+[node name="Quit" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(120, 44)
 layout_mode = 2
+text = "Quit"
+
+[node name="JoinPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 200.0
+offset_top = 150.0
+offset_right = 440.0
+offset_bottom = 254.0
+
+[node name="VBox" type="VBoxContainer" parent="JoinPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="JoinPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.29, 0.17, 0.09, 1)
+theme_override_font_sizes/font_size = 12
+text = "Join a friend's game"
+horizontal_alignment = 1
+
+[node name="Address" type="LineEdit" parent="JoinPanel/VBox"]
+layout_mode = 2
+text = "127.0.0.1"
+placeholder_text = "Host IP address"
+alignment = 1
+
+[node name="Row" type="HBoxContainer" parent="JoinPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Connect" type="Button" parent="JoinPanel/VBox/Row"]
+custom_minimum_size = Vector2(96, 30)
+layout_mode = 2
+text = "Connect"
+
+[node name="Back" type="Button" parent="JoinPanel/VBox/Row"]
+custom_minimum_size = Vector2(96, 30)
+layout_mode = 2
+text = "Back"
+
+[node name="Status" type="Label" parent="."]
+layout_mode = 0
+offset_left = 120.0
+offset_top = 268.0
+offset_right = 520.0
+offset_bottom = 286.0
+theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.05, 1)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 10
 horizontal_alignment = 1
-autowrap_mode = 3
+
+[node name="TrackerStatus" type="Label" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 342.0
+offset_right = 420.0
+offset_bottom = 358.0
+theme_override_colors/font_color = Color(1, 0.96, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.05, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 8
+
+[node name="Credit" type="Label" parent="."]
+layout_mode = 0
+offset_left = 440.0
+offset_top = 342.0
+offset_right = 632.0
+offset_bottom = 358.0
+theme_override_colors/font_color = Color(1, 0.96, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.05, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 8
+text = "Technica 2026"
+horizontal_alignment = 2

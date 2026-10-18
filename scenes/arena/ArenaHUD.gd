@@ -2,6 +2,7 @@ extends CanvasLayer
 ## On-screen info: HP bars, status banner, camera panel, hint card, learned signs, game over.
 
 const FLASH_TIME := 1.5
+const MESSAGE_BOTTOM := 332.0  # message box sits bottom-center, clear of NPC speech bubbles
 const LEARNED_HINT_TIME := 4.0
 
 var _flash_text := ""
@@ -14,7 +15,8 @@ var _hint_timer := 0.0  # > 0 means the hint card hides itself when this runs ou
 @onready var _p1_bar: ProgressBar = $HPBars/P1Bar
 @onready var _p2_bar: ProgressBar = $HPBars/P2Bar
 @onready var _p2_label: Label = $HPBars/P2Label
-@onready var _banner: Label = $Banner
+@onready var _message_box: PanelContainer = $MessageBox
+@onready var _message: Label = $MessageBox/Message
 @onready var _camera_panel: Panel = $CameraPanel
 @onready var _hand_view = $CameraPanel/Hand
 @onready var _tracker_status: Label = $CameraPanel/TrackerStatus
@@ -56,11 +58,10 @@ func _process(delta: float) -> void:
 	if not SignInput.tracker_connected:
 		_hand_view.set_landmarks([], false)
 
+	var text := _status_text()
 	if _flash_timer > 0.0:
 		_flash_timer -= delta
-		_banner.text = _flash_text
-	else:
-		_banner.text = _status_text()
+		text = _flash_text
 
 	if _hint_timer > 0.0:
 		_hint_timer -= delta
@@ -71,12 +72,28 @@ func _process(delta: float) -> void:
 	# The dojo has its own sign toolbar and title; only keep the banner for guard warnings.
 	var in_dojo: bool = _world.dojo_ui.visible
 	_signs.visible = not in_dojo
-	_banner.visible = not in_dojo or GameState.phase == GameState.Phase.WAITING
+	if in_dojo and GameState.phase != GameState.Phase.WAITING:
+		text = ""
+	_set_message(text)
 
 
 func flash(text: String) -> void:
 	_flash_text = text
 	_flash_timer = FLASH_TIME
+	_message.text = ""  # force a re-layout and a pop even if the text repeats
+
+
+## Show `text` in the bottom-center message box, sized to fit; "" hides it.
+func _set_message(text: String) -> void:
+	_message_box.visible = text != ""
+	if text == "" or text == _message.text:
+		return
+	_message.text = text
+	var box_size := _message_box.get_combined_minimum_size()
+	_message_box.size = box_size
+	_message_box.position = Vector2(round((640.0 - box_size.x) / 2.0), MESSAGE_BOTTOM - box_size.y)
+	_message_box.pivot_offset = box_size / 2.0
+	create_tween().tween_property(_message_box, "scale", Vector2.ONE, 0.12).from(Vector2(1.08, 1.08))
 
 
 func show_learned(letter: String) -> void:

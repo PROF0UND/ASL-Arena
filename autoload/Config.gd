@@ -42,9 +42,10 @@ const QUALITY_STRONG_ABOVE := 0.8
 const FIREBALL_LIFETIME := 2.5
 const CAST_RELEASE_TIME := 0.25  # fireball leaves on the cast animation's 4th frame (12 fps)
 const FIREBALL_TIERS := {
-	"weak": {"damage": 10, "speed": 110.0, "radius": 3.0, "color": Color(1.0, 0.8, 0.45)},
-	"medium": {"damage": 18, "speed": 150.0, "radius": 4.0, "color": Color(1.0, 0.55, 0.15)},
-	"strong": {"damage": 28, "speed": 200.0, "radius": 6.0, "color": Color(1.0, 0.25, 0.05)},
+	# shake: camera shake on hit, in world pixels; shake_time: seconds it lasts
+	"weak": {"damage": 10, "speed": 110.0, "radius": 3.0, "color": Color(1.0, 0.8, 0.45), "shake": 1.0, "shake_time": 0.15},
+	"medium": {"damage": 18, "speed": 150.0, "radius": 4.0, "color": Color(1.0, 0.55, 0.15), "shake": 2.0, "shake_time": 0.22},
+	"strong": {"damage": 28, "speed": 200.0, "radius": 6.0, "color": Color(1.0, 0.25, 0.05), "shake": 4.0, "shake_time": 0.35},
 }
 
 # --- NPCs ---

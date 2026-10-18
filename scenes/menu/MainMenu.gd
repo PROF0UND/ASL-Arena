@@ -1,5 +1,6 @@
 extends Control
-## Title screen. Also reads launch flags for quick testing (pass them after `--`):
+## Title screen: wizards dueling in the arena behind a hanging title sign and Stardew-style buttons.
+## Also reads launch flags for quick testing (pass them after `--`):
 ##   --quick-duel   --host   --join=<ip>   --tracker-port=<port> (read by SignInput)
 
 const WORLD_SCENE := "res://scenes/world/World.tscn"
@@ -8,21 +9,41 @@ static var _launch_flags_used := false
 
 @onready var _quick_button: Button = $Buttons/QuickDuel
 @onready var _host_button: Button = $Buttons/Host
-@onready var _address: LineEdit = $Buttons/Address
 @onready var _join_button: Button = $Buttons/Join
-@onready var _status: Label = $Buttons/Status
+@onready var _quit_button: Button = $Buttons/Quit
+@onready var _join_panel: PanelContainer = $JoinPanel
+@onready var _address: LineEdit = $JoinPanel/VBox/Address
+@onready var _connect_button: Button = $JoinPanel/VBox/Row/Connect
+@onready var _back_button: Button = $JoinPanel/VBox/Row/Back
+@onready var _status: Label = $Status
+@onready var _tracker_label: Label = $TrackerStatus
 
 
 func _ready() -> void:
 	_quick_button.pressed.connect(_on_quick_duel)
 	_host_button.pressed.connect(_on_host)
-	_join_button.pressed.connect(_on_join)
+	_join_button.pressed.connect(_show_join_panel.bind(true))
+	_quit_button.pressed.connect(get_tree().quit)
+	_connect_button.pressed.connect(_on_join)
+	_back_button.pressed.connect(_show_join_panel.bind(false))
+	_address.text_submitted.connect(func(_text: String): _on_join())
 	Net.connected.connect(_on_connected)
 	Net.connect_failed.connect(_on_connect_failed)
+	_join_panel.visible = false
 	_quick_button.grab_focus()
 	if not _launch_flags_used:
 		_launch_flags_used = true
 		_apply_launch_flags.call_deferred()
+
+
+func _process(_delta: float) -> void:
+	_tracker_label.text = "Hand tracker: ready" if SignInput.tracker_connected else "Hand tracker: not running (Space + key to sign)"
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _join_panel.visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		_show_join_panel(false)
 
 
 func _apply_launch_flags() -> void:
@@ -33,7 +54,18 @@ func _apply_launch_flags() -> void:
 			_on_host()
 		elif arg.begins_with("--join="):
 			_address.text = arg.get_slice("=", 1)
+			_show_join_panel(true)
 			_on_join()
+
+
+func _show_join_panel(show: bool) -> void:
+	_join_panel.visible = show
+	_status.text = ""
+	if show:
+		_address.grab_focus()
+		_address.caret_column = _address.text.length()
+	else:
+		_join_button.grab_focus()
 
 
 func _on_quick_duel() -> void:
@@ -72,5 +104,5 @@ func _on_connect_failed(reason: String) -> void:
 
 
 func _set_buttons_disabled(disabled: bool) -> void:
-	for button in [_quick_button, _host_button, _join_button]:
+	for button in [_quick_button, _host_button, _join_button, _connect_button]:
 		button.disabled = disabled

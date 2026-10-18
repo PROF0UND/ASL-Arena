@@ -21,6 +21,9 @@ var _remote_target := Vector2.ZERO
 var _send_timer := 0.0
 var _reported_in_arena := false
 var _last_position := Vector2.ZERO
+var _shake_strength := 0.0
+var _shake_time := 0.0
+var _shake_left := 0.0
 var _casting := false  # the cast animation plays out before run/idle take over again
 
 @onready var _sprite: AnimatedSprite2D = $Sprite
@@ -74,6 +77,7 @@ func _physics_process(delta: float) -> void:
 	_update_animation(delta)
 	_check_arena()
 	_frame_fight()
+	_update_shake(delta)
 	_send_timer -= delta
 	# Wait until both players exist, or the other peer gets RPCs for a node it hasn't spawned yet.
 	if _send_timer <= 0.0 and _world().players.size() == 2:
@@ -179,6 +183,24 @@ func cast() -> void:
 		_sprite.flip_h = foe.global_position.x < global_position.x
 	_casting = true
 	_sprite.play(&"cast")
+
+
+## Shake this player's camera (only matters for the local player). Stronger hits shake harder.
+func shake(strength: float, duration: float) -> void:
+	if strength >= _shake_strength * (_shake_left / maxf(_shake_time, 0.001)):
+		_shake_strength = strength
+		_shake_time = duration
+		_shake_left = duration
+
+
+func _update_shake(delta: float) -> void:
+	if _shake_left <= 0.0:
+		_camera.offset = Vector2.ZERO
+		return
+	_shake_left = maxf(_shake_left - delta, 0.0)
+	var amount := _shake_strength * (_shake_left / _shake_time)
+	# Whole pixels only, so the pixel art stays crisp while it shakes.
+	_camera.offset = Vector2(randf_range(-amount, amount), randf_range(-amount, amount)).round()
 
 
 func flash() -> void:
