@@ -24,9 +24,11 @@ var _hint_timer := 0.0  # > 0 means the hint card hides itself when this runs ou
 @onready var _hint_letter: Label = $HintCard/HintLetter
 @onready var _hint_sprite: TextureRect = $HintCard/HintSprite
 @onready var _signs: Label = $Signs
-@onready var _game_over: Panel = $GameOver
-@onready var _result: Label = $GameOver/Result
-@onready var _back_button: Button = $GameOver/BackButton
+@onready var _game_over: Control = $GameOver
+@onready var _game_over_box: Control = $GameOver/Box
+@onready var _result: Label = $GameOver/Box/Result
+@onready var _subtitle: Label = $GameOver/Box/Subtitle
+@onready var _back_button: Button = $GameOver/Box/BackButton
 
 
 func _ready() -> void:
@@ -102,10 +104,14 @@ func show_learned(letter: String) -> void:
 	_hint_timer = LEARNED_HINT_TIME
 
 
-func show_game_over(text: String) -> void:
-	_result.text = text
+func show_game_over(title: String, subtitle := "") -> void:
+	_result.text = title
+	_subtitle.text = subtitle
 	_game_over.visible = true
 	_back_button.grab_focus()
+	create_tween().tween_property(_game_over_box, "scale", Vector2.ONE, 0.25) \
+			.from(Vector2(0.6, 0.6)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	Audio.play_sfx("honk", -6.0)  # the goose on the corner approves
 
 
 func _show_hint(letter: String) -> void:
@@ -128,11 +134,11 @@ func _on_hp_changed(slot: int, hp: int) -> void:
 
 func _on_match_over(winner_slot: int) -> void:
 	if GameState.mode == "quick":
-		show_game_over("Dummy defeated!")
+		show_game_over("VICTORY!", "The dummy never stood a chance.")
 	elif winner_slot == Net.local_slot():
-		show_game_over("You win!")
+		show_game_over("VICTORY!", "Your signs were too strong!")
 	else:
-		show_game_over("You lose...")
+		show_game_over("DEFEAT...", "Practice your signs in the dojo and try again!")
 
 
 func _status_text() -> String:

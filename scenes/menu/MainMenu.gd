@@ -37,7 +37,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	_tracker_label.text = "Hand tracker: ready" if SignInput.tracker_connected else "Hand tracker: not running (Space + key to sign)"
+	_tracker_label.text = "Tracker: ready" if SignInput.tracker_connected else "Tracker: off (Space+key)"
 
 
 func _unhandled_input(event: InputEvent) -> void:

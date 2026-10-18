@@ -13,7 +13,7 @@ const CREAM := Color("fdf2d0")
 
 const SIGN := Rect2(64, 14, 192, 46)
 const TITLE := "ASL ARENA"
-const TAGLINE := "Sign. Cast. Duel."
+const TAGLINE := "Sign. Cast. Goose."
 
 var _font: Font
 var _t := 0.0

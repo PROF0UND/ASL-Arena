@@ -363,4 +363,4 @@ func _drop_taken(id: int, slot: int, letter: String) -> void:
 
 func _on_opponent_left() -> void:
 	if GameState.mode == "online":
-		hud.show_game_over("Opponent disconnected")
+		hud.show_game_over("MATCH OVER", "Your opponent disconnected.")

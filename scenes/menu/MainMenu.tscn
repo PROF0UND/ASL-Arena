@@ -112,7 +112,7 @@ horizontal_alignment = 1
 layout_mode = 0
 offset_left = 8.0
 offset_top = 342.0
-offset_right = 420.0
+offset_right = 168.0
 offset_bottom = 358.0
 theme_override_colors/font_color = Color(1, 0.96, 0.85, 1)
 theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.05, 1)
@@ -121,7 +121,7 @@ theme_override_font_sizes/font_size = 8
 
 [node name="Credit" type="Label" parent="."]
 layout_mode = 0
-offset_left = 440.0
+offset_left = 520.0
 offset_top = 342.0
 offset_right = 632.0
 offset_bottom = 358.0
@@ -131,3 +131,16 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 8
 text = "Technica 2026"
 horizontal_alignment = 2
+
+[node name="Notice" type="Label" parent="."]
+layout_mode = 0
+offset_left = 168.0
+offset_top = 342.0
+offset_right = 520.0
+offset_bottom = 358.0
+theme_override_colors/font_color = Color(1, 0.96, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.05, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 8
+text = "All music & sounds copyright-free - all art handmade"
+horizontal_alignment = 1

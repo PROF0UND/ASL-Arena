@@ -58,9 +58,11 @@ target = NodePath("../../Arena/FromNorth")
 
 [node name="NPC1" parent="Zones/Bridge1" instance=ExtResource("11_npc")]
 position = Vector2(132, 80)
+advice = "Hey! Make sure you learned your ASL spells before going in there!"
 
 [node name="NPC2" parent="Zones/Bridge1" instance=ExtResource("11_npc")]
 position = Vector2(190, 160)
+advice = "The better you cast, the more damage you do >:)"
 
 [node name="Arena" parent="Zones" instance=ExtResource("2_arena")]
 position = Vector2(0, 780)
@@ -95,9 +97,11 @@ target = NodePath("../../Home2/FromBridge")
 
 [node name="NPC1" parent="Zones/Bridge2" instance=ExtResource("11_npc")]
 position = Vector2(190, 80)
+advice = "The better you cast, the more damage you do >:)"
 
 [node name="NPC2" parent="Zones/Bridge2" instance=ExtResource("11_npc")]
 position = Vector2(132, 160)
+advice = "Hey! Make sure you learned your ASL spells before going in there!"
 
 [node name="Home2" parent="Zones" instance=ExtResource("3_zone")]
 position = Vector2(0, 1600)
