@@ -1,0 +1,25 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/characters/goose.png" id="1_goose"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_goose0"]
+atlas = ExtResource("1_goose")
+region = Rect2(0, 0, 26, 26)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_goose1"]
+atlas = ExtResource("1_goose")
+region = Rect2(26, 0, 26, 26)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_goose0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_goose1")
+}],
+"loop": true,
+"name": &"default",
+"speed": 6.0
+}]

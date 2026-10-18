@@ -1,34 +1,12 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/arena/Goose.gd" id="1_goose"]
-[ext_resource type="Texture2D" path="res://assets/characters/goose.png" id="2_goose"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_goose0"]
-atlas = ExtResource("2_goose")
-region = Rect2(0, 0, 26, 26)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_goose1"]
-atlas = ExtResource("2_goose")
-region = Rect2(26, 0, 26, 26)
-
-[sub_resource type="SpriteFrames" id="SpriteFrames_goose"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_goose0")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_goose1")
-}],
-"loop": true,
-"name": &"default",
-"speed": 6.0
-}]
+[ext_resource type="SpriteFrames" path="res://assets/characters/goose_frames.tres" id="2_frames"]
 
 [node name="Goose" type="Node2D"]
 z_index = 5
 script = ExtResource("1_goose")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
-sprite_frames = SubResource("SpriteFrames_goose")
+sprite_frames = ExtResource("2_frames")
 autoplay = "default"
