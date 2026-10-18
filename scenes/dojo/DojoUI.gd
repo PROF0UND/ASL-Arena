@@ -38,6 +38,7 @@ func close() -> void:
 	if not visible:
 		return
 	visible = false
+	SignInput.set_target("")
 	_set_player_locked(false)
 
 
@@ -85,6 +86,7 @@ func _on_letter_progress(letter: String, progress: float) -> void:
 ## Put a letter on the board and fade its hand sign in.
 func _show_lesson(letter: String) -> void:
 	_room.lesson = letter
+	SignInput.set_target(letter)
 	_room.sign_texture = Config.sign_texture(letter) if letter != "" else null
 	_room.progress = 0.0
 	_room.board_alpha = 0.0

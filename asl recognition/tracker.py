@@ -2,9 +2,14 @@
 """ASL Arena hand tracker: webcam -> hand crop -> Teachable Machine model -> UDP packets for the game.
 
 Sends JSON to 127.0.0.1:4242 about 30 times a second (the format is in ../README.md):
-    {"letter": "L", "confidence": 0.91, "hand_present": true, "landmarks": [[x, y], ...]}
+    {"letter": "L", "confidence": 0.91, "scores": {"L": 0.91, "W": 0.03, ...},
+     "hand_present": true, "landmarks": [[x, y], ...]}
 
-The game does the hold-to-confirm; this script just reports what it sees each frame.
+Scores are rescaled to compare only the game's letters, so they add up to 1. The game uses the score of the
+sign it's waiting for, so a look-alike briefly winning doesn't break a hold. The game does the hold-to-confirm;
+this script just reports what it sees each frame.
+
+In the preview window: q quits, m toggles mirrored classification (compare which reads your hand better).
 
 Usage (from this folder, inside the Python 3.12 venv):
     python tracker.py                    # preview window, the letters the game uses
@@ -89,6 +94,16 @@ def to_tensor(canvas):
     return rgb.astype(np.float32)[None] / 127.5 - 1.0
 
 
+def draw_score_bars(img, scores):
+    """One bar per letter in the corner of the preview, so you can see how each sign reads."""
+    for row, (letter, score) in enumerate(sorted(scores.items())):
+        y = 60 + row * 22
+        cv2.putText(img, letter, (10, y + 14), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.rectangle(img, (30, y), (230, y + 16), (60, 60, 60), cv2.FILLED)
+        color = (0, 200, 0) if score >= 0.35 else (0, 160, 255)  # green = clears the game's bar
+        cv2.rectangle(img, (30, y), (30 + int(200 * score), y + 16), color, cv2.FILLED)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--host", default="127.0.0.1")
@@ -124,6 +139,7 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     address = (args.host, args.port)
     history = deque(maxlen=max(1, args.smooth))
+    mirror = args.mirror_input
     print(f"Sending to {address[0]}:{address[1]}. Press q in the preview window (or Ctrl-C) to quit.")
 
     fps, frames, fps_clock = 0.0, 0, time.time()
@@ -136,12 +152,12 @@ def main():
                 continue
             # The Kaggle training images aren't mirrored, so classify the raw frame by default
             # and mirror only what the player sees.
-            if args.mirror_input:
+            if mirror:
                 frame = cv2.flip(frame, 1)
             frame_h, frame_w = frame.shape[:2]
             hands, _ = detector.findHands(frame, draw=False, flipType=False)
 
-            packet = {"letter": None, "confidence": 0.0, "hand_present": False, "landmarks": []}
+            packet = {"letter": None, "confidence": 0.0, "scores": {}, "hand_present": False, "landmarks": []}
             canvas = None
             if hands:
                 hand = hands[0]
@@ -152,14 +168,16 @@ def main():
                 packet["hand_present"] = True
                 # Landmarks in the player's (mirrored) view, normalized 0..1, for the game's hand panel.
                 packet["landmarks"] = [
-                    [round(p[0] / frame_w if args.mirror_input else 1 - p[0] / frame_w, 4), round(p[1] / frame_h, 4)]
+                    [round(p[0] / frame_w if mirror else 1 - p[0] / frame_w, 4), round(p[1] / frame_h, 4)]
                     for p in lm_list
                 ]
                 if canvas is not None:
                     history.append(predict(to_tensor(canvas)).numpy()[0])
-                    probs = np.mean(history, axis=0)
-                    best = max(allowed, key=lambda i: probs[i])
-                    packet["letter"] = labels[best]
+                    probs = np.mean(history, axis=0)[allowed]
+                    probs = probs / max(float(probs.sum()), 1e-6)  # compare only the game's letters
+                    packet["scores"] = {labels[i]: round(float(p), 3) for i, p in zip(allowed, probs)}
+                    best = int(np.argmax(probs))
+                    packet["letter"] = labels[allowed[best]]
                     packet["confidence"] = round(float(probs[best]), 3)
             else:
                 history.clear()
@@ -173,15 +191,21 @@ def main():
                 view = frame.copy()
                 if hands:
                     draw_skeleton(view, hands[0]["lmList"])
-                if not args.mirror_input:
+                if not mirror:
                     view = cv2.flip(view, 1)
-                status = f"{packet['letter'] or '-'}  {packet['confidence']:.2f}   {fps:.0f} fps"
-                cv2.putText(view, status, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 255), 2)
+                status = f"{packet['letter'] or '-'}  {packet['confidence']:.2f}   {fps:.0f} fps   mirror: {'on' if mirror else 'off'} (m)"
+                cv2.putText(view, status, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 255), 2)
+                draw_score_bars(view, packet["scores"])
                 cv2.imshow("ASL Arena tracker", view)
                 if canvas is not None:
                     cv2.imshow("Model input", cv2.resize(canvas, (MODEL_SIZE, MODEL_SIZE)))
-                if cv2.waitKey(1) & 0xFF == ord("q"):
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord("q"):
                     break
+                if key == ord("m"):
+                    mirror = not mirror
+                    history.clear()
+                    print(f"mirrored classification: {'on' if mirror else 'off'}")
     except KeyboardInterrupt:
         pass
     finally:

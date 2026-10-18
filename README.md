@@ -88,6 +88,7 @@ Useful tracker flags: `--camera 1` (other webcam), `--no-preview`, `--letters LW
 {
   "letter": "A",
   "confidence": 0.92,
+  "scores": {"L": 0.92, "W": 0.03, "I": 0.01, "U": 0.02, "K": 0.01, "P": 0.01},
   "hand_present": true,
   "landmarks": [[0.51, 0.84], [0.47, 0.78], "... 21 [x, y] points, MediaPipe order, normalized 0..1"]
 }
@@ -96,7 +97,9 @@ Useful tracker flags: `--camera 1` (other webcam), `--no-preview`, `--letters LW
 - `letter` is `null` when a hand is visible but not recognized.
 - `hand_present: false` means no hand is in frame.
 - `landmarks` can be `[]`. It's only used to draw the hand skeleton in the camera panel.
-- The game handles the 0.5s hold-to-confirm. The tracker just reports what it sees in each frame.
+- `scores` holds every game letter's score, rescaled to add up to 1. When the game is waiting for a specific sign,
+  it uses that letter's score, so a look-alike briefly winning doesn't break the hold.
+- The game handles the hold-to-confirm (0.4 s, with a short grace period). The tracker just reports what it sees in each frame.
 
 [tools/fake_sender.py](tools/fake_sender.py) sends exactly this format (it uses only the standard library).
 Use it to test the game without a camera:

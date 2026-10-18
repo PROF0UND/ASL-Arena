@@ -66,6 +66,7 @@ func _pick_letter(me) -> void:
 	if options.is_empty():
 		return
 	current_letter = options.pick_random()
+	SignInput.set_target(current_letter)
 	_prompt_time = 0.0
 	_hint_shown = false
 	me.show_prompt.rpc(current_letter)
@@ -74,6 +75,7 @@ func _pick_letter(me) -> void:
 
 func _clear_prompt(me) -> void:
 	current_letter = ""
+	SignInput.set_target("")
 	_gap = Config.PROMPT_GAP
 	_hint_shown = false
 	if me:

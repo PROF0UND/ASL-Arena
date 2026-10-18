@@ -10,8 +10,10 @@ const SIGN_SPRITE_DIR := "res://assets/signs/"
 
 # --- Sign input ---
 const TRACKER_PORT := 4242
-const HOLD_TIME := 0.5                  # seconds a sign must be held to count
-const MIN_CONFIDENCE := 0.4             # tracker readings below this are ignored
+const HOLD_TIME := 0.4                  # seconds a sign must be held to count
+const HOLD_GRACE := 0.25                # dropouts shorter than this pause the hold instead of resetting it
+const TARGET_MIN_SCORE := 0.35          # the expected sign counts while its score is at least this
+const MIN_CONFIDENCE := 0.4             # with no expected sign, the top guess must be at least this
 const TRACKER_STALE_TIME := 0.5         # no packet for this long means no hand
 const KEYBOARD_CONFIDENCE := 1.0        # holding a letter key
 const KEYBOARD_SLOPPY_CONFIDENCE := 0.5 # holding Shift + letter key
@@ -29,19 +31,20 @@ const PROMPT_RANGE := 120.0    # how close to the opponent before letters appear
 const PROMPT_GAP := 0.8        # pause between one prompt ending and the next
 const HINT_DELAY := 5.0        # show the hand-sign card after this long
 const PROMPT_TIMEOUT := 10.0   # give up on the letter after this long
-const LETTER_COOLDOWN := 6.0   # per letter, so knowing few signs means few attacks
+const LETTER_COOLDOWN := 4.0   # per letter, so knowing few signs means few attacks
 const DROP_INTERVAL := 12.0
 const DROP_PICKUP_RADIUS := 12.0
 
 # --- Fireballs ---
-const QUALITY_WEAK_BELOW := 0.6
-const QUALITY_STRONG_ABOVE := 0.85
+# Sign quality = the expected letter's average score over the hold (keyboard: 1.0, or 0.5 with Shift).
+const QUALITY_WEAK_BELOW := 0.55
+const QUALITY_STRONG_ABOVE := 0.8
 const FIREBALL_LIFETIME := 2.5
 const CAST_RELEASE_TIME := 0.25  # fireball leaves on the cast animation's 4th frame (12 fps)
 const FIREBALL_TIERS := {
-	"weak": {"damage": 4, "speed": 110.0, "radius": 3.0, "color": Color(1.0, 0.8, 0.45)},
-	"medium": {"damage": 10, "speed": 150.0, "radius": 4.0, "color": Color(1.0, 0.55, 0.15)},
-	"strong": {"damage": 20, "speed": 200.0, "radius": 6.0, "color": Color(1.0, 0.25, 0.05)},
+	"weak": {"damage": 10, "speed": 110.0, "radius": 3.0, "color": Color(1.0, 0.8, 0.45)},
+	"medium": {"damage": 18, "speed": 150.0, "radius": 4.0, "color": Color(1.0, 0.55, 0.15)},
+	"strong": {"damage": 28, "speed": 200.0, "radius": 6.0, "color": Color(1.0, 0.25, 0.05)},
 }
 
 # --- NPCs ---

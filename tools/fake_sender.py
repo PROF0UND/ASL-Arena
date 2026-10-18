@@ -4,8 +4,9 @@
 The real tracker should send the same JSON, about 30 times a second, to UDP 127.0.0.1:4242:
 
     {
-      "letter": "A",          # recognized letter, or null if a hand is visible but unrecognized
+      "letter": "L",          # top guess among the game's letters, or null if a hand is visible but unrecognized
       "confidence": 0.92,     # 0..1 for that letter
+      "scores": {"L": 0.92, "W": 0.02, ...},  # every game letter, adding up to 1 (optional but recommended)
       "hand_present": true,   # false when no hand is in frame
       "landmarks": [[x, y], ...]  # 21 MediaPipe hand landmarks, x/y normalized 0..1 (may be [])
     }
@@ -39,9 +40,17 @@ def fake_landmarks(t):
 
 
 def make_packet(letter, confidence, hand_present, t):
+    scores = {}
+    if hand_present:
+        others = [l for l in LETTERS if l != letter]
+        rest = (1.0 - confidence) / len(others) if letter else 1.0 / len(LETTERS)
+        scores = {l: round(rest, 3) for l in others}
+        if letter:
+            scores[letter] = round(confidence, 3)
     return {
         "letter": letter,
         "confidence": round(confidence, 3) if letter else 0.0,
+        "scores": scores,
         "hand_present": hand_present,
         "landmarks": fake_landmarks(t) if hand_present else [],
     }
