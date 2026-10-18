@@ -35,7 +35,8 @@ On Windows, click "Allow" on the firewall prompt the first time.
 ## Game flow
 
 1. Each player starts in their own home. Walk onto the yellow door to enter the **dojo**. The sensei
-   teaches the starter letters `A B C I L O V W Y` one at a time: hold the sign to learn it.
+   teaches the letters `L W I U K X P` (the ones the model recognizes best) one at a time:
+   hold the sign to learn it.
 2. Walk out through your home's gate onto the **bridge** (NPCs there give tips), then off the far end into the **arena**.
    Each area is its own screen; walking through a gate or off the bridge fades to the next one. The arena is one-way.
 3. When one player reaches the arena, the other has **10 seconds**. After that, guards walk onto their screen and escort them in.
@@ -47,6 +48,39 @@ On Windows, click "Allow" on the firewall prompt the first time.
    - Glowing **drops** in the arena teach a new letter mid-fight.
 
 Every number above lives in [autoload/Config.gd](autoload/Config.gd).
+
+## Hand tracking
+
+The tracker lives in [asl recognition/](asl%20recognition/): MediaPipe finds the hand, the crop is classified by a
+Teachable Machine model (`Model/keras_model.h5`, A–Z), and [tracker.py](asl%20recognition/tracker.py) sends the
+result to the game. It needs **Python 3.11 or 3.12** (TensorFlow/MediaPipe don't support newer Pythons).
+
+One-time setup:
+
+```bash
+# Linux / macOS
+cd "asl recognition"
+uv venv -p 3.12 .venv          # or: python3.12 -m venv .venv
+uv pip install -p .venv/bin/python -r requirements.txt
+```
+
+```powershell
+# Windows
+cd "asl recognition"
+py -3.12 -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
+```
+
+Run it:
+
+```bash
+tools/play.sh --quick-duel                      # Linux/macOS: starts the tracker and the game together
+"asl recognition/.venv/bin/python" "asl recognition/tracker.py"   # tracker alone, with a preview window
+```
+
+On Windows, run `.venv\Scripts\python tracker.py` in one terminal and the game in another.
+Useful tracker flags: `--camera 1` (other webcam), `--no-preview`, `--letters LWIUKXP`,
+`--mirror-input` (classify the mirrored image; try it if letters are recognized poorly).
 
 ## Tracker → game contract (UDP JSON, 127.0.0.1:4242, ~30/s)
 

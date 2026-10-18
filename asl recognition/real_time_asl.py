@@ -39,26 +39,26 @@ while True:
     if not success:
         break
 
-    # Mirror horizontally
-    img = cv2.flip(img, 1)
-    imgOutput = img.copy()
+    # Classify the unmirrored frame: the Kaggle training images aren't mirrored.
+    # The window is mirrored at the end, just for display.
 
     # Hand detection without default cvzone drawings
     hands, img = detector.findHands(img, draw=False, flipType=False)
+    predicted_letter = None
 
     if hands:
         hand = hands[0]
         x, y, w, h = hand['bbox']
         lmList = hand['lmList']
 
-        # Draw hand skeleton onto output display
+        # Draw the skeleton on the image we crop from: the training crops had it drawn on them.
         for p1, p2 in CONNECTIONS:
             pt1 = (lmList[p1][0], lmList[p1][1])
             pt2 = (lmList[p2][0], lmList[p2][1])
-            cv2.line(imgOutput, pt1, pt2, (0, 255, 0), 2)
+            cv2.line(img, pt1, pt2, (0, 255, 0), 2)
 
         for lm in lmList:
-            cv2.circle(imgOutput, (lm[0], lm[1]), 4, (0, 0, 255), cv2.FILLED)
+            cv2.circle(img, (lm[0], lm[1]), 4, (0, 0, 255), cv2.FILLED)
 
         # Boundary clamping to prevent empty crops near frame edges
         img_h, img_w, _ = img.shape
@@ -98,20 +98,23 @@ while True:
                 index = int(np.argmax(predictions))
                 predicted_letter = labels[index]
 
-                # Draw bounding box and prediction badge
-                cv2.rectangle(imgOutput, (x - offset, y - offset),
-                              (x + w + offset, y + h + offset), (255, 0, 255), 3)
-
-                cv2.rectangle(imgOutput, (x - offset, y - offset - 45),
-                              (x - offset + 80, y - offset), (255, 0, 255), cv2.FILLED)
-
-                cv2.putText(imgOutput, predicted_letter, (x - offset + 25, y - offset - 10),
-                            cv2.FONT_HERSHEY_COMPLEX, 1.2, (255, 255, 255), 2)
-
                 cv2.imshow("Normalized Feed", imgBlank)
 
             except Exception:
-                continue
+                predicted_letter = None
+
+    # Mirror for display, then draw the box and badge in mirrored coordinates so the text reads normally.
+    imgOutput = cv2.flip(img, 1)
+    if hands and predicted_letter:
+        mx = imgOutput.shape[1] - (x + w)  # bbox left edge after mirroring
+        cv2.rectangle(imgOutput, (mx - offset, y - offset),
+                      (mx + w + offset, y + h + offset), (255, 0, 255), 3)
+
+        cv2.rectangle(imgOutput, (mx - offset, y - offset - 45),
+                      (mx - offset + 80, y - offset), (255, 0, 255), cv2.FILLED)
+
+        cv2.putText(imgOutput, predicted_letter, (mx - offset + 25, y - offset - 10),
+                    cv2.FONT_HERSHEY_COMPLEX, 1.2, (255, 255, 255), 2)
 
     cv2.imshow("ASL Real-Time Recognition", imgOutput)
 

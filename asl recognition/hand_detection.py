@@ -1,3 +1,7 @@
+# Collect training images for one letter: python hand_detection.py L
+# Press s to save the current hand crop into image_data_processed/<letter>/, q to quit.
+import os
+import sys
 import cv2
 from cvzone.HandTrackingModule import HandDetector
 import numpy as np
@@ -9,8 +13,11 @@ detector = HandDetector(maxHands=1)
 
 offset = 20
 imgSize = 500
-folder = "image_data_processed"
+letter = sys.argv[1].upper() if len(sys.argv) > 1 else "UNSORTED"
+folder = os.path.join("image_data_processed", letter)
+os.makedirs(folder, exist_ok=True)
 counter = 0
+imgBlank = None
 
 # MediaPipe 21-landmark bone connection pairs
 CONNECTIONS = [
@@ -27,8 +34,8 @@ while True:
     if not success:
         break
 
-    # 1. Mirror horizontally
-    img = cv2.flip(img, 1)
+    # 1. Work on the unmirrored frame so saved crops match the Kaggle images; only the window is mirrored.
+    imgBlank = None
 
     # 2. draw=False eliminates the green center circle and default overlays
     hands, img = detector.findHands(img, draw=False, flipType=False)
@@ -41,10 +48,10 @@ while True:
 
         # 3. Resolve "Unknown" label using landmark geometry on mirrored frame
         if hand_type == "Unknown" or not hand_type:
-            # On a mirrored feed facing the camera:
-            # Right hand: Thumb (lm 4) is to the left of Pinky (lm 20)
-            # Left hand:  Thumb (lm 4) is to the right of Pinky (lm 20)
-            if lmList[4][0] < lmList[20][0]:
+            # On the unmirrored feed, palm facing the camera:
+            # Right hand: Thumb (lm 4) is to the right of Pinky (lm 20)
+            # Left hand:  Thumb (lm 4) is to the left of Pinky (lm 20)
+            if lmList[4][0] > lmList[20][0]:
                 hand_type = "Right"
             else:
                 hand_type = "Left"
@@ -58,10 +65,6 @@ while True:
         # 5. Draw joint points (red)
         for lm in lmList:
             cv2.circle(img, (lm[0], lm[1]), 4, (0, 0, 255), cv2.FILLED)
-
-        # 6. Draw clean bounding box and resolved label
-        cv2.rectangle(img, (x - offset, y - offset), (x + w + offset, y + h + offset), (255, 0, 255), 2)
-        cv2.putText(img, hand_type, (x, y - offset - 10), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 255), 2)
 
         # Boundary clamping to prevent empty crops near frame edges
         img_h, img_w, _ = img.shape
@@ -96,10 +99,17 @@ while True:
             except Exception:
                 continue
 
-    cv2.imshow("Image", img)
+    # 6. Mirrored window with the box and label drawn on top (kept off the saved crops)
+    display = cv2.flip(img, 1)
+    if hands:
+        mx = display.shape[1] - (x + w)
+        cv2.rectangle(display, (mx - offset, y - offset), (mx + w + offset, y + h + offset), (255, 0, 255), 2)
+        cv2.putText(display, f"{letter}  {hand_type}  saved: {counter}", (mx, y - offset - 10),
+                    cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 255), 2)
+    cv2.imshow("Image", display)
 
     key = cv2.waitKey(1)
-    if key == ord("s"):
+    if key == ord("s") and imgBlank is not None:
         counter += 1
         cv2.imwrite(f'{folder}/Image_{time.time()}.jpg', imgBlank)
         print(f"saved image count: {counter}")

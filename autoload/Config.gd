@@ -2,18 +2,17 @@ extends Node
 ## Every tunable number lives here so balancing never means hunting through scripts.
 
 # --- Signs ---
-const STARTER_LETTERS := ["A", "B", "C", "I", "L", "O", "V", "W", "Y"]
-const QUICK_DUEL_LETTERS := ["A", "B", "L", "V", "Y"]
+# The letters the hand-tracking model recognizes reliably (see asl recognition/).
+const STARTER_LETTERS := ["L", "W", "I", "U", "K", "X", "P"]
+const QUICK_DUEL_LETTERS := ["L", "W", "I", "U", "X"]
 const SIGN_HINTS := {
-	"A": "Make a fist. Rest your thumb against the side of your index finger.",
-	"B": "Flat hand, fingers together pointing up. Fold your thumb across your palm.",
-	"C": "Curve your fingers and thumb into the shape of a C.",
-	"I": "Make a fist and raise only your pinky.",
 	"L": "Index finger up, thumb out to the side: an L.",
-	"O": "Touch all your fingertips to your thumb to make an O.",
-	"V": "Index and middle fingers up and apart, like a peace sign.",
 	"W": "Index, middle and ring fingers up and spread apart.",
-	"Y": "Thumb and pinky out, the other fingers folded down.",
+	"I": "Make a fist and raise only your pinky.",
+	"U": "Index and middle fingers straight up, pressed together.",
+	"K": "Index and middle fingers up in a V, with your thumb pressed between them.",
+	"X": "Make a fist, then raise your index finger bent like a hook.",
+	"P": "Make a K, then point it down: index forward, middle finger down, thumb between.",
 }
 
 # --- Sign input ---
@@ -56,11 +55,11 @@ const NPC_ADVICE := [
 	"Hold each sign steady for half a second. Rushing it won't count!",
 	"Keep your hand inside the camera frame. The sensei can't read what it can't see.",
 	"A clean sign throws a big fireball. A sloppy one barely sparks.",
-	"C and O look alike. C stays open, O touches.",
+	"K and P are the same shape. P just points down.",
 	"Rushing into the arena with one sign? Your fireballs will be few and far between.",
 	"Watch for glowing drops in the arena. They teach new signs mid-fight.",
 	"Good lighting makes your signs easier to read.",
-	"V is two fingers, W is three. Count before you cast!",
+	"U keeps two fingers together. W spreads three apart.",
 ]
 
 

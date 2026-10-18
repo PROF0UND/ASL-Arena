@@ -1,0 +1,7 @@
+# Needs Python 3.11 or 3.12 (TensorFlow and MediaPipe don't support newer Pythons yet).
+tensorflow==2.18.*
+tf-keras==2.18.*
+mediapipe==0.10.21
+cvzone==1.6.1
+opencv-python==4.10.*
+numpy<2
